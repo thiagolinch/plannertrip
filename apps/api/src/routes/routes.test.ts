@@ -706,4 +706,55 @@ describe('Participants Routes', () => {
     const updated = mockParticipantsStore.find(p => p.id === participantId)
     expect(updated.is_confirmed).toBe(true)
   })
+
+  it('should confirm presence via PATCH API successfully', async () => {
+    const participantId = randomUUID()
+    mockParticipantsStore.push({
+      id: participantId,
+      trip_id: 'trip-123',
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: false,
+      is_confirmed: false
+    })
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/participants/${participantId}/confirm`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    const body = JSON.parse(response.body)
+    expect(body.success).toBe(true)
+    
+    const updated = mockParticipantsStore.find(p => p.id === participantId)
+    expect(updated.is_confirmed).toBe(true)
+  })
+
+  it('should fail confirming presence via PATCH API if user tries to confirm another participant', async () => {
+    const participantId = randomUUID()
+    mockParticipantsStore.push({
+      id: participantId,
+      trip_id: 'trip-123',
+      name: 'Friend',
+      email: 'friend@example.com',
+      is_owner: false,
+      is_confirmed: false
+    })
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/participants/${participantId}/confirm`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(400)
+    const body = JSON.parse(response.body)
+    expect(body.message).toContain('Access denied')
+  })
 })

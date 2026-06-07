@@ -1,8 +1,6 @@
 import { MapPin, Calendar, Settings2, ChevronLeft } from "lucide-react";
 import { Button } from "../../components/button";
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { api } from "../../lib/axios";
+import { useState } from "react";
 import { format } from "date-fns";
 import { UpdateTripModal } from "./update-trip-modal";
 
@@ -14,14 +12,12 @@ interface Trip {
   is_confirmed: boolean
 }
 
-export function DestinationAndDateHeader() {
-  const { tripId } = useParams()
-  const [trip, setTrip] = useState<Trip | undefined>()
-  const [isUpdateTripModalOpen, setIsUpdateTripModalOpen] = useState(false)
+interface DestinationAndDateHeaderProps {
+  trip: Trip | undefined;
+}
 
-  useEffect(() => {
-    api.get(`trips/${tripId}`).then(response => setTrip(response.data.trip))
-  }, [tripId])
+export function DestinationAndDateHeader({ trip }: DestinationAndDateHeaderProps) {
+  const [isUpdateTripModalOpen, setIsUpdateTripModalOpen] = useState(false)
 
   const handleDashboard = () => {
     window.location.href = "/"

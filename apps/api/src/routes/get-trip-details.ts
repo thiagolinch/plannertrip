@@ -43,6 +43,8 @@ export async function getTripDetails(app: FastifyInstance) {
       }
 
       const tripData = tripDoc.data()!
+      const participantDoc = participantsSnapshot.docs[0]
+      const participantData = participantDoc.data()!
 
       return {
         trip: {
@@ -51,6 +53,13 @@ export async function getTripDetails(app: FastifyInstance) {
           starts_at: tripData.starts_at,
           ends_at: tripData.ends_at,
           is_confirmed: tripData.is_confirmed,
+        },
+        my_participant: {
+          id: participantDoc.id,
+          name: participantData.name,
+          email: participantData.email,
+          is_confirmed: participantData.is_confirmed,
+          is_owner: participantData.is_owner || false,
         }
       }
     },
