@@ -24,7 +24,11 @@ import { env } from './env'
 const app = fastify()
 
 app.register(cors, {
-  origin: '*',
+  origin: [
+    'https://www.planner.thiagolinch.com.br',
+    'https://planner.thiagolinch.com.br',
+    'http://localhost:5173'
+  ],
 })
 
 app.setValidatorCompiler(validatorCompiler)

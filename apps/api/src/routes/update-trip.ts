@@ -1,14 +1,16 @@
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
-import { prisma } from '../lib/prisma'
+import { db } from '../lib/firebase'
 import { dayjs } from '../lib/dayjs'
 import { ClientError } from '../errors/client-error'
+import { verifyFirebaseAuth } from '../middlewares/auth'
 
 export async function updateTrip(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().put(
     '/trips/:tripId',
     {
+      preHandler: [verifyFirebaseAuth],
       schema: {
         params: z.object({
           tripId: z.string().uuid(),
@@ -24,12 +26,26 @@ export async function updateTrip(app: FastifyInstance) {
       const { tripId } = request.params
       const { destination, starts_at, ends_at } = request.body
 
-      const trip = await prisma.trip.findUnique({
-        where: { id: tripId }
-      })
+      const userEmail = request.user?.email
+      if (!userEmail) {
+        throw new ClientError('Authentication email is required.')
+      }
 
-      if (!trip) {
+      const tripRef = db.collection('trips').doc(tripId)
+      const tripDoc = await tripRef.get()
+
+      if (!tripDoc.exists) {
         throw new ClientError('Trip not found')
+      }
+
+      // Check if user is a participant of this trip
+      const participantsSnapshot = await tripRef
+        .collection('participants')
+        .where('email', '==', userEmail)
+        .get()
+
+      if (participantsSnapshot.empty) {
+        throw new ClientError('Access denied: You are not invited to this trip.')
       }
 
       if (dayjs(starts_at).isBefore(new Date())) {
@@ -40,16 +56,13 @@ export async function updateTrip(app: FastifyInstance) {
         throw new ClientError('Invalid trip end date.')
       }
 
-      await prisma.trip.update({
-        where: { id: tripId },
-        data: {
-          destination,
-          starts_at,
-          ends_at,
-        },
+      await tripRef.update({
+        destination,
+        starts_at: starts_at.toISOString(),
+        ends_at: ends_at.toISOString(),
       })
 
-      return { tripId: trip.id }
+      return { tripId }
     },
   )
 }

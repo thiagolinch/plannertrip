@@ -9,9 +9,7 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "turbo lint",
-    "prisma:generate": "npm run prisma:generate --workspace=@planner/api",
-    "prisma:migrate": "npm run prisma:migrate:deploy --workspace=@planner/api"
+    "lint": "turbo lint"
   },
   "devDependencies": {
     "turbo": "^2.0.0"

@@ -1,13 +1,15 @@
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
-import { prisma } from '../lib/prisma'
+import { db } from '../lib/firebase'
 import { ClientError } from '../errors/client-error'
+import { verifyFirebaseAuth } from '../middlewares/auth'
 
 export async function getTripDetails(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get(
     '/trips/:tripId',
     {
+      preHandler: [verifyFirebaseAuth],
       schema: {
         params: z.object({
           tripId: z.string().uuid(),
@@ -17,22 +19,39 @@ export async function getTripDetails(app: FastifyInstance) {
     async (request) => {
       const { tripId } = request.params
 
-      const trip = await prisma.trip.findUnique({
-        select: {
-          id: true,
-          destination: true,
-          starts_at: true,
-          ends_at: true,
-          is_confirmed: true,
-        },
-        where: { id: tripId },
-      })
+      const userEmail = request.user?.email
+      if (!userEmail) {
+        throw new ClientError('Authentication email is required.')
+      }
 
-      if (!trip) {
+      const tripRef = db.collection('trips').doc(tripId)
+      const tripDoc = await tripRef.get()
+
+      if (!tripDoc.exists) {
         throw new ClientError('Trip not found')
       }
 
-      return { trip }
+      // Check if user is a participant of this trip
+      const participantsSnapshot = await tripRef
+        .collection('participants')
+        .where('email', '==', userEmail)
+        .get()
+
+      if (participantsSnapshot.empty) {
+        throw new ClientError('Access denied: You are not invited to this trip.')
+      }
+
+      const tripData = tripDoc.data()!
+
+      return {
+        trip: {
+          id: tripDoc.id,
+          destination: tripData.destination,
+          starts_at: tripData.starts_at,
+          ends_at: tripData.ends_at,
+          is_confirmed: tripData.is_confirmed,
+        }
+      }
     },
   )
 }

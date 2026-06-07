@@ -1,13 +1,15 @@
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
-import { prisma } from '../lib/prisma'
+import { db } from '../lib/firebase'
 import { ClientError } from '../errors/client-error'
+import { verifyFirebaseAuth } from '../middlewares/auth'
 
 export async function createLink(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().post(
     '/trips/:tripId/links',
     {
+      preHandler: [verifyFirebaseAuth],
       schema: {
         params: z.object({
           tripId: z.string().uuid(),
@@ -22,23 +24,37 @@ export async function createLink(app: FastifyInstance) {
       const { tripId } = request.params
       const { title, url } = request.body
 
-      const trip = await prisma.trip.findUnique({
-        where: { id: tripId }
-      })
+      const userEmail = request.user?.email
+      if (!userEmail) {
+        throw new ClientError('Authentication email is required.')
+      }
 
-      if (!trip) {
+      const tripRef = db.collection('trips').doc(tripId)
+      const tripDoc = await tripRef.get()
+
+      if (!tripDoc.exists) {
         throw new ClientError('Trip not found')
       }
 
-      const link = await prisma.link.create({
-        data: {
-          title,
-          url,
-          trip_id: tripId,
-        }
+      // Check if user is a participant of this trip
+      const participantsSnapshot = await db
+        .collection('participants')
+        .where('trip_id', '==', tripId)
+        .where('email', '==', userEmail)
+        .get()
+
+      if (participantsSnapshot.empty) {
+        throw new ClientError('Access denied: You are not invited to this trip.')
+      }
+
+      const linkRef = db.collection('links').doc()
+      await linkRef.set({
+        trip_id: tripId,
+        title,
+        url,
       })
 
-      return { linkId: link.id }
+      return { linkId: linkRef.id }
     },
   )
 }
