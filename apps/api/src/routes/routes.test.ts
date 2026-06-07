@@ -25,12 +25,71 @@ vi.mock('../lib/mail', () => {
 vi.mock('../lib/firebase', () => {
   return {
     db: {
+      batch: () => {
+        const batchDeletes: any[] = []
+        return {
+          delete: (docRef: any) => {
+            batchDeletes.push(docRef)
+          },
+          commit: async () => {
+            for (const docRef of batchDeletes) {
+              const targetId = docRef.id
+              const col = docRef.colName
+              if (col === 'trips') {
+                mockTripsStore = mockTripsStore.filter(t => t.id !== targetId)
+              } else if (col === 'participants') {
+                mockParticipantsStore = mockParticipantsStore.filter(p => p.id !== targetId)
+              } else if (col === 'activities') {
+                mockActivitiesStore = mockActivitiesStore.filter(a => a.id !== targetId)
+              } else if (col === 'links') {
+                mockLinksStore = mockLinksStore.filter(l => l.id !== targetId)
+              }
+            }
+          }
+        }
+      },
       collection: (colName: string) => {
+        const createQuery = (filters: Array<{ field: string; val: any }> = []) => {
+          return {
+            where: (field: string, op: string, val: any) => {
+              return createQuery([...filters, { field, val }])
+            },
+            get: async () => {
+              let filtered: any[] = []
+              if (colName === 'trips') {
+                filtered = mockTripsStore
+              } else if (colName === 'participants') {
+                filtered = mockParticipantsStore
+              } else if (colName === 'activities') {
+                filtered = mockActivitiesStore
+              } else if (colName === 'links') {
+                filtered = mockLinksStore
+              }
+
+              for (const f of filters) {
+                filtered = filtered.filter(item => item[f.field] === f.val)
+              }
+
+              return {
+                empty: filtered.length === 0,
+                docs: filtered.map(d => ({
+                  id: d.id,
+                  ref: { id: d.id, colName },
+                  data: () => d
+                }))
+              }
+            }
+          }
+        }
+
         return {
           doc: (docId?: string) => {
             const id = docId || randomUUID()
+            const docRef = { id, colName }
             return {
               id,
+              colName,
+              ref: docRef,
               get: async () => {
                 let data: any = null
                 if (colName === 'trips') {
@@ -69,42 +128,7 @@ vi.mock('../lib/firebase', () => {
             }
           },
           where: (field: string, op: string, val: any) => {
-            const queryChain = {
-              get: async () => {
-                let filtered: any[] = []
-                if (colName === 'participants') {
-                  filtered = mockParticipantsStore.filter(p => p[field] === val)
-                } else if (colName === 'activities') {
-                  filtered = mockActivitiesStore.filter(a => a[field] === val)
-                } else if (colName === 'links') {
-                  filtered = mockLinksStore.filter(l => l[field] === val)
-                }
-                return {
-                  empty: filtered.length === 0,
-                  docs: filtered.map(d => ({
-                    id: d.id,
-                    data: () => d
-                  }))
-                }
-              },
-              where: (field2: string, op2: string, val2: any) => {
-                const getWithChain = async () => {
-                  let filtered: any[] = []
-                  if (colName === 'participants') {
-                    filtered = mockParticipantsStore.filter(p => p[field] === val && p[field2] === val2)
-                  }
-                  return {
-                    empty: filtered.length === 0,
-                    docs: filtered.map(d => ({
-                      id: d.id,
-                      data: () => d
-                    }))
-                  }
-                }
-                return { get: getWithChain }
-              }
-            }
-            return queryChain
+            return createQuery().where(field, op, val)
           }
         }
       }
@@ -509,6 +533,77 @@ describe('Trip Routes', () => {
     const body = JSON.parse(response.body)
     expect(body.message).toContain('Trip not found')
   })
+
+  it('should successfully delete a trip when owner is authenticated', async () => {
+    const tripId = randomUUID()
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: true,
+      is_confirmed: true
+    })
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/trips/${tripId}`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    const body = JSON.parse(response.body)
+    expect(body.success).toBe(true)
+    expect(mockTripsStore.find(t => t.id === tripId)).toBeUndefined()
+  })
+
+  it('should fail to delete a trip if user is not the owner', async () => {
+    const tripId = randomUUID()
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'other@example.com',
+      is_owner: true,
+      is_confirmed: true
+    })
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/trips/${tripId}`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(400)
+    const body = JSON.parse(response.body)
+    expect(body.message).toContain('Access denied')
+  })
+
+  it('should fail to delete a trip if unauthenticated', async () => {
+    const tripId = randomUUID()
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/trips/${tripId}`
+    })
+
+    expect(response.statusCode).toBe(401)
+  })
 })
 
 describe('Activities Routes', () => {
@@ -698,6 +793,40 @@ describe('Participants Routes', () => {
 
     expect(response.statusCode).toBe(200)
     expect(mockParticipantsStore).toHaveLength(2)
+  })
+
+  it('should fail to add invite if user is not the trip owner', async () => {
+    const tripId = randomUUID()
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: false,
+      is_confirmed: true
+    })
+
+    const response = await app.inject({
+      method: 'POST',
+      url: `/trips/${tripId}/invites`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      },
+      payload: {
+        email: 'friend@example.com'
+      }
+    })
+
+    expect(response.statusCode).toBe(400)
+    const body = JSON.parse(response.body)
+    expect(body.message).toContain('Access denied')
   })
 
   it('should list participants successfully', async () => {

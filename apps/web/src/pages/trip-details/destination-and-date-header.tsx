@@ -1,8 +1,9 @@
-import { MapPin, Calendar, Settings2, ChevronLeft } from "lucide-react";
+import { MapPin, Calendar, Settings2, ChevronLeft, Trash2 } from "lucide-react";
 import { Button } from "../../components/button";
 import { useState } from "react";
 import { format } from "date-fns";
 import { UpdateTripModal } from "./update-trip-modal";
+import { api } from "../../lib/axios";
 
 interface Trip {
   id: string;
@@ -14,10 +15,27 @@ interface Trip {
 
 interface DestinationAndDateHeaderProps {
   trip: Trip | undefined;
+  isOwner: boolean;
 }
 
-export function DestinationAndDateHeader({ trip }: DestinationAndDateHeaderProps) {
+export function DestinationAndDateHeader({ trip, isOwner }: DestinationAndDateHeaderProps) {
   const [isUpdateTripModalOpen, setIsUpdateTripModalOpen] = useState(false)
+
+  async function handleDeleteTrip() {
+    if (!trip) return;
+    const confirmDelete = window.confirm(
+      "Tem certeza que deseja excluir esta viagem? Esta ação não pode ser desfeita e removerá todos os convidados, atividades e links associados."
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await api.delete(`/trips/${trip.id}`);
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Erro ao excluir viagem:", error);
+      alert("Ocorreu um erro ao tentar excluir a viagem.");
+    }
+  }
 
   const handleDashboard = () => {
     window.location.href = "/"
@@ -60,6 +78,13 @@ export function DestinationAndDateHeader({ trip }: DestinationAndDateHeaderProps
           Alterar local/data
           <Settings2 className="size-5" />
         </Button>
+
+        {isOwner && (
+          <Button onClick={handleDeleteTrip} variant="danger" className="w-full sm:w-auto justify-center">
+            Excluir viagem
+            <Trash2 className="size-5" />
+          </Button>
+        )}
       </div>
 
       {isUpdateTripModalOpen && (

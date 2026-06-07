@@ -12,7 +12,11 @@ interface Participant {
   is_confirmed: boolean;
 }
 
-export function Guests() {
+interface GuestsProps {
+  isOwner: boolean;
+}
+
+export function Guests({ isOwner }: GuestsProps) {
   const { tripId } = useParams()
   const [participants, setParticipants] = useState<Participant[]>([])
   const [isManageGuestsModalOpen, setIsManageGuestsModalOpen] = useState(false)
@@ -66,6 +70,7 @@ export function Guests() {
           closeManageGuestsModal={closeManageGuestsModal}
           participants={participants}
           onRefreshParticipants={fetchParticipants}
+          isOwner={isOwner}
         />
       )}
     </div>

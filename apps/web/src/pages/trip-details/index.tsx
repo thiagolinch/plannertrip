@@ -74,7 +74,7 @@ export function TripDetailsPage() {
 
   return (
     <div className="max-w-6xl px-6 py-10 mx-auto space-y-8">
-      <DestinationAndDateHeader trip={trip} />
+      <DestinationAndDateHeader trip={trip} isOwner={myParticipant?.is_owner || false} />
 
       {trip && !trip.is_confirmed && myParticipant?.is_owner && (
         <div className="bg-zinc-900 border border-orange-400/20 px-6 py-4 rounded-xl shadow-shape flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -129,7 +129,7 @@ export function TripDetailsPage() {
 
           <div className="w-full h-px bg-zinc-800" />
 
-          <Guests />
+          <Guests isOwner={myParticipant?.is_owner || false} />
         </div>
       </main>
 

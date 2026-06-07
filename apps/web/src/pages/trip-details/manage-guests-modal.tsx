@@ -15,12 +15,14 @@ interface ManageGuestsModalProps {
   closeManageGuestsModal: () => void;
   participants: Participant[];
   onRefreshParticipants: () => void;
+  isOwner: boolean;
 }
 
 export function ManageGuestsModal({
   closeManageGuestsModal,
   participants,
   onRefreshParticipants,
+  isOwner,
 }: ManageGuestsModalProps) {
   const { tripId } = useParams();
   const [isSendingInvite, setIsSendingInvite] = useState(false);
@@ -96,31 +98,37 @@ export function ManageGuestsModal({
 
         <div className="w-full h-px bg-zinc-800" />
 
-        {/* Invite Form */}
-        <form onSubmit={handleInviteGuest} className="space-y-3">
-          <div className="h-14 px-4 bg-zinc-950 border border-zinc-800 rounded-lg flex items-center gap-2">
-            <AtSign className="text-zinc-400 size-5" />
-            <input
-              type="email"
-              name="email"
-              placeholder="Digite o e-mail do convidado"
-              className="bg-transparent text-lg placeholder-zinc-400 outline-none flex-1"
-              required
-              disabled={isSendingInvite}
-            />
-          </div>
+        {/* Invite Form / Restriction Info */}
+        {isOwner ? (
+          <form onSubmit={handleInviteGuest} className="space-y-3">
+            <div className="h-14 px-4 bg-zinc-950 border border-zinc-800 rounded-lg flex items-center gap-2">
+              <AtSign className="text-zinc-400 size-5" />
+              <input
+                type="email"
+                name="email"
+                placeholder="Digite o e-mail do convidado"
+                className="bg-transparent text-lg placeholder-zinc-400 outline-none flex-1"
+                required
+                disabled={isSendingInvite}
+              />
+            </div>
 
-          <Button size="full" disabled={isSendingInvite}>
-            {isSendingInvite ? (
-              "Enviando convite..."
-            ) : (
-              <>
-                <Plus className="size-5" />
-                Convidar
-              </>
-            )}
-          </Button>
-        </form>
+            <Button size="full" disabled={isSendingInvite}>
+              {isSendingInvite ? (
+                "Enviando convite..."
+              ) : (
+                <>
+                  <Plus className="size-5" />
+                  Convidar
+                </>
+              )}
+            </Button>
+          </form>
+        ) : (
+          <div className="bg-zinc-950 border border-zinc-800/60 p-4 rounded-lg flex items-center gap-3 justify-center text-zinc-400 text-sm">
+            <span>⚠️ Apenas o organizador desta viagem pode convidar novos participantes.</span>
+          </div>
+        )}
       </div>
     </div>
   );

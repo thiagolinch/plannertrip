@@ -42,15 +42,16 @@ export async function createInvite(app: FastifyInstance) {
         throw new ClientError('Trip not found')
       }
 
-      // Check if user is a participant of this trip
+      // Check if user is the owner (organizer) of this trip
       const participantsSnapshot = await db
         .collection('participants')
         .where('trip_id', '==', tripId)
         .where('email', '==', userEmail)
+        .where('is_owner', '==', true)
         .get()
 
       if (participantsSnapshot.empty) {
-        throw new ClientError('Access denied: You are not invited to this trip.')
+        throw new ClientError('Access denied: Only the organizer can invite guests to this trip.')
       }
 
       const tripData = tripDoc.data()!
