@@ -1,4 +1,4 @@
-import { MapPin, Calendar, Settings2 } from "lucide-react";
+import { MapPin, Calendar, Settings2, ChevronLeft } from "lucide-react";
 import { Button } from "../../components/button";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -22,11 +22,21 @@ export function DestinationAndDateHeader() {
     api.get(`trips/${tripId}`).then(response => setTrip(response.data.trip))
   }, [tripId])
 
+  const handleDashboard = () => {
+    window.location.href = "/"
+  }
+
   const displayedDate = trip ? format(new Date(trip.starts_at), "d' de 'LLL").concat(' até ').concat(format(new Date(trip.ends_at), "d' de 'LLL"))
     : null
 
   return (
     <div className="px-4 h-16 rounded-xl bg-zinc-900 shadow-shape flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <button onClick={handleDashboard} className="flex items-center gap-2 p-2 hover:bg-zinc-800 rounded-lg">
+          <ChevronLeft className="size-5 text-zinc-400" />
+          <p className="text-zinc-100">Voltar</p>
+        </button>
+      </div>
       <div className="flex items-center gap-2">
         <MapPin className="size-5 text-zinc-400" />
         <span className="text-zinc-100">{trip?.destination}</span>
