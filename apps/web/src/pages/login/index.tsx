@@ -1,4 +1,4 @@
-import { signInWithPopup, GoogleAuthProvider, OAuthProvider } from 'firebase/auth'
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
 import { auth } from '../../lib/firebase'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
@@ -24,20 +24,20 @@ export function LoginPage() {
     }
   }
 
-  const handleAppleLogin = async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const provider = new OAuthProvider('apple.com')
-      await signInWithPopup(auth, provider)
-      navigate('/')
-    } catch (err) {
-      console.error(err)
-      setError('Falha ao autenticar com a Apple. Tente novamente.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  // const handleAppleLogin = async () => {
+  //   setIsLoading(true)
+  //   setError(null)
+  //   try {
+  //     const provider = new OAuthProvider('apple.com')
+  //     await signInWithPopup(auth, provider)
+  //     navigate('/')
+  //   } catch (err) {
+  //     console.error(err)
+  //     setError('Falha ao autenticar com a Apple. Tente novamente.')
+  //   } finally {
+  //     setIsLoading(false)
+  //   }
+  // }
 
   return (
     <div className="h-screen flex items-center justify-center bg-pattern bg-no-repeat bg-center bg-zinc-950">
