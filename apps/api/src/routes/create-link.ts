@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { randomUUID } from 'crypto'
 import { z } from 'zod'
 import { db } from '../lib/firebase'
 import { ClientError } from '../errors/client-error'
@@ -12,7 +13,7 @@ export async function createLink(app: FastifyInstance) {
       preHandler: [verifyFirebaseAuth],
       schema: {
         params: z.object({
-          tripId: z.string().uuid(),
+          tripId: z.string().min(1),
         }),
         body: z.object({
           title: z.string().min(4),
@@ -47,14 +48,15 @@ export async function createLink(app: FastifyInstance) {
         throw new ClientError('Access denied: You are not invited to this trip.')
       }
 
-      const linkRef = db.collection('links').doc()
+      const linkId = randomUUID()
+      const linkRef = db.collection('links').doc(linkId)
       await linkRef.set({
         trip_id: tripId,
         title,
         url,
       })
 
-      return { linkId: linkRef.id }
+      return { linkId }
     },
   )
 }

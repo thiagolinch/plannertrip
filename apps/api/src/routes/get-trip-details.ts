@@ -12,7 +12,7 @@ export async function getTripDetails(app: FastifyInstance) {
       preHandler: [verifyFirebaseAuth],
       schema: {
         params: z.object({
-          tripId: z.string().uuid(),
+          tripId: z.string().min(1),
         }),
       },
     },
@@ -32,8 +32,9 @@ export async function getTripDetails(app: FastifyInstance) {
       }
 
       // Check if user is a participant of this trip
-      const participantsSnapshot = await tripRef
+      const participantsSnapshot = await db
         .collection('participants')
+        .where('trip_id', '==', tripId)
         .where('email', '==', userEmail)
         .get()
 

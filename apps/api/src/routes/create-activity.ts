@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { randomUUID } from 'crypto'
 import { z } from 'zod'
 import { db } from '../lib/firebase'
 import { dayjs } from '../lib/dayjs'
@@ -13,7 +14,7 @@ export async function createActivity(app: FastifyInstance) {
       preHandler: [verifyFirebaseAuth],
       schema: {
         params: z.object({
-          tripId: z.string().uuid(),
+          tripId: z.string().min(1),
         }),
         body: z.object({
           title: z.string().min(4),
@@ -58,14 +59,15 @@ export async function createActivity(app: FastifyInstance) {
         throw new ClientError('Invalid activity date: occurs after trip ends.')
       }
 
-      const activityRef = db.collection('activities').doc()
+      const activityId = randomUUID()
+      const activityRef = db.collection('activities').doc(activityId)
       await activityRef.set({
         trip_id: tripId,
         title,
         occurs_at: occurs_at.toISOString(),
       })
 
-      return { activityId: activityRef.id }
+      return { activityId }
     },
   )
 }

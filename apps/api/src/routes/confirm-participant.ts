@@ -11,7 +11,7 @@ export async function confirmParticipants(app: FastifyInstance) {
     {
       schema: {
         params: z.object({
-          participantId: z.string().uuid(),
+          participantId: z.string().min(1),
         }),
       },
     },

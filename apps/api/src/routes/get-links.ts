@@ -12,7 +12,7 @@ export async function getLinks(app: FastifyInstance) {
       preHandler: [verifyFirebaseAuth],
       schema: {
         params: z.object({
-          tripId: z.string().uuid(),
+          tripId: z.string().min(1),
         }),
       },
     },

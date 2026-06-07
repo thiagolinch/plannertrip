@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { randomUUID } from 'crypto'
 import nodemailer from 'nodemailer'
 import { z } from 'zod'
 import { db } from '../lib/firebase'
@@ -46,8 +47,8 @@ export async function createTrip(app: FastifyInstance) {
         throw new ClientError('Invalid trip end date.')
       }
 
-      const tripRef = db.collection('trips').doc()
-      const tripId = tripRef.id
+      const tripId = randomUUID()
+      const tripRef = db.collection('trips').doc(tripId)
 
       await tripRef.set({
         destination,
@@ -58,7 +59,8 @@ export async function createTrip(app: FastifyInstance) {
       })
 
       // Add owner to flat participants collection
-      const ownerRef = db.collection('participants').doc()
+      const ownerId = randomUUID()
+      const ownerRef = db.collection('participants').doc(ownerId)
       await ownerRef.set({
         trip_id: tripId,
         name: owner_name,
@@ -69,7 +71,8 @@ export async function createTrip(app: FastifyInstance) {
 
       // Add guests to flat participants collection
       for (const email of emails_to_invite) {
-        const guestRef = db.collection('participants').doc()
+        const guestId = randomUUID()
+        const guestRef = db.collection('participants').doc(guestId)
         await guestRef.set({
           trip_id: tripId,
           name: null,

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { randomUUID } from 'crypto'
 import { z } from 'zod'
 import nodemailer from 'nodemailer'
 import { db } from '../lib/firebase'
@@ -16,7 +17,7 @@ export async function createInvite(app: FastifyInstance) {
       preHandler: [verifyFirebaseAuth],
       schema: {
         params: z.object({
-          tripId: z.string().uuid(),
+          tripId: z.string().min(1),
         }),
         body: z.object({
           email: z.string().email(),
@@ -53,8 +54,8 @@ export async function createInvite(app: FastifyInstance) {
       const tripData = tripDoc.data()!
 
       // Add guest to flat participants collection
-      const participantRef = db.collection('participants').doc()
-      const participantId = participantRef.id
+      const participantId = randomUUID()
+      const participantRef = db.collection('participants').doc(participantId)
 
       await participantRef.set({
         trip_id: tripId,
