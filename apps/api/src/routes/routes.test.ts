@@ -8,6 +8,20 @@ let mockParticipantsStore: any[] = []
 let mockActivitiesStore: any[] = []
 let mockLinksStore: any[] = []
 
+vi.mock('../lib/mail', () => {
+  return {
+    getMailClient: async () => {
+      return {
+        sendMail: async (options: any) => {
+          return {
+            messageId: 'mock-message-id'
+          }
+        }
+      }
+    }
+  }
+})
+
 vi.mock('../lib/firebase', () => {
   return {
     db: {

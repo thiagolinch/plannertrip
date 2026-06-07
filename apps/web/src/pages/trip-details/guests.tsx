@@ -1,8 +1,9 @@
 import { CheckCircle2, CircleDashed, UserCog } from "lucide-react";
 import { Button } from "../../components/button";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../lib/axios";
+import { ManageGuestsModal } from "./manage-guests-modal";
 
 interface Participant {
   id: string;
@@ -14,10 +15,23 @@ interface Participant {
 export function Guests() {
   const { tripId } = useParams()
   const [participants, setParticipants] = useState<Participant[]>([])
+  const [isManageGuestsModalOpen, setIsManageGuestsModalOpen] = useState(false)
+
+  function fetchParticipants() {
+    api.get(`trips/${tripId}/participants`).then(response => setParticipants(response.data.participants))
+  }
 
   useEffect(() => {
-    api.get(`trips/${tripId}/participants`).then(response => setParticipants(response.data.participants))
+    fetchParticipants()
   }, [tripId])
+
+  function openManageGuestsModal() {
+    setIsManageGuestsModalOpen(true)
+  }
+
+  function closeManageGuestsModal() {
+    setIsManageGuestsModalOpen(false)
+  }
 
   return (
     <div className="space-y-6">
@@ -26,8 +40,8 @@ export function Guests() {
       <div className="space-y-5">
         {participants.map((participant, index) => (
           <div key={participant.id} className="flex items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <span className="block font-medium text-zinc-100">{participant.name ?? `Convidado ${index + 1}`}</span>
+            <div className="space-y-1.5 min-w-0 flex-1">
+              <span className="block font-medium text-zinc-100 truncate">{participant.name ?? `Convidado ${index + 1}`}</span>
               <span className="block text-sm text-zinc-400 truncate">
                 {participant.email}
               </span>
@@ -42,10 +56,18 @@ export function Guests() {
         ))}
       </div>
 
-      <Button variant="secondary" size="full">
+      <Button onClick={openManageGuestsModal} variant="secondary" size="full">
         <UserCog className="size-5" />
         Gerenciar convidados
       </Button>
+
+      {isManageGuestsModalOpen && (
+        <ManageGuestsModal 
+          closeManageGuestsModal={closeManageGuestsModal}
+          participants={participants}
+          onRefreshParticipants={fetchParticipants}
+        />
+      )}
     </div>
   )
 }
