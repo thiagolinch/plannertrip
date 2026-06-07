@@ -1,0 +1,22 @@
+# Turborepo
+.turbo
+
+# Node dependency directories
+node_modules/
+
+# Production build outputs
+dist/
+dist-ssr/
+*.local
+
+# Environment variables
+.env
+.env.production
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

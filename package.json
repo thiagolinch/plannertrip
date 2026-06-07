@@ -1,0 +1,19 @@
+{
+  "name": "planner-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "npm@10.8.2",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "prisma:generate": "npm run prisma:generate --workspace=@planner/api",
+    "prisma:migrate": "npm run prisma:migrate:deploy --workspace=@planner/api"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  }
+}
