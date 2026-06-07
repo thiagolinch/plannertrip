@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { randomUUID } from 'crypto'
+import path from 'path'
 import nodemailer from 'nodemailer'
 import { z } from 'zod'
 import { db } from '../lib/firebase'
@@ -9,6 +10,7 @@ import { dayjs } from '../lib/dayjs'
 import { ClientError } from '../errors/client-error'
 import { env } from '../env'
 import { verifyFirebaseAuth } from '../middlewares/auth'
+import { buildEmailTemplate } from '../lib/email-template'
 
 export async function createTrip(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().post(
@@ -83,11 +85,22 @@ export async function createTrip(app: FastifyInstance) {
       }
 
       const formattedStartDate = dayjs(starts_at).format('LL')
-      const formattedEndDate = dayjs(ends_at).format('LL')
-
       const confirmationLink = `${env.API_BASE_URL}/trips/${tripId}/confirm`
 
       const mail = await getMailClient()
+
+      const html = buildEmailTemplate({
+        destination,
+        startsAt: starts_at,
+        endsAt: ends_at,
+        title: 'Confirmar criação de viagem',
+        bodyHtml: `
+          Você solicitou a criação de uma viagem para <strong class="highlight">${destination}</strong> nas datas de <strong class="highlight">${dayjs(starts_at).format('LL')}</strong> até <strong class="highlight">${dayjs(ends_at).format('LL')}</strong>.
+          <p style="margin-top: 16px;">Para confirmar sua viagem e disparar os convites para seus amigos, clique no botão abaixo:</p>
+        `,
+        buttonText: 'Confirmar viagem',
+        buttonLink: confirmationLink
+      })
 
       const message = await mail.sendMail({
         from: {
@@ -99,19 +112,14 @@ export async function createTrip(app: FastifyInstance) {
           address: owner_email,
         },
         subject: `Confirme sua viagem para ${destination} em ${formattedStartDate}`,
-        html: `
-        <div style="font-family: sans-serif; font-size: 16px; line-height: 1.6;">
-          <p>Você solicitou a criação de uma viagem para <strong>${destination}</strong> nas datas de <strong>${formattedStartDate}</strong> até <strong>${formattedEndDate}</strong>.</p>
-          <p></p>
-          <p>Para confirmar sua viagem, clique no link abaixo:</p>
-          <p></p>
-          <p>
-            <a href="${confirmationLink}">Confirmar viagem</a>
-          </p>
-          <p></p>
-          <p>Caso você não saiba do que se trata esse e-mail, apenas ignore esse e-mail.</p>
-        </div>
-      `.trim(),
+        html,
+        attachments: [
+          {
+            filename: 'logo.svg',
+            path: path.resolve(__dirname, '../assets/logo.svg'),
+            cid: 'logo'
+          }
+        ]
       })
 
       console.log(nodemailer.getTestMessageUrl(message))
