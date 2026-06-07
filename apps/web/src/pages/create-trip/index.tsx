@@ -6,6 +6,7 @@ import { DestinationAndDateStep } from "./steps/destination-and-date-step";
 import { InviteGuestsStep } from "./steps/invite-guests-step";
 import { DateRange } from "react-day-picker";
 import { api } from "../../lib/axios";
+import { auth } from "../../lib/firebase";
 
 import logo from "../../assets/imgs/logo.svg"
 
@@ -20,8 +21,7 @@ export function CreateTripPage() {
   ])
 
   const [destination, setDestination] = useState('')
-  const [ownerName, setOwnerName] = useState('')
-  const [ownerEmail, setOwnerEmail] = useState('')
+  const [ownerName, setOwnerName] = useState(auth.currentUser?.displayName || '')
   const [eventStartAndEndDates, setEventStartAndEndDates] = useState<DateRange>()
 
   function openGuestsInput() {
@@ -91,16 +91,15 @@ export function CreateTripPage() {
       return
     }
 
-    if (!ownerName || !ownerEmail) {
+    if (!ownerName) {
       return
     }
 
     const response = await api.post('/trips', {
       destination,
-      starts_at: eventStartAndEndDates.from.toISOString(), // Convertendo para ISO string
-      ends_at: eventStartAndEndDates.to.toISOString(),    // Convertendo para ISO string
+      starts_at: eventStartAndEndDates.from.toISOString(),
+      ends_at: eventStartAndEndDates.to.toISOString(),
       owner_name: ownerName,
-      owner_email: ownerEmail,
       emails_to_invite: emailsToInvite,
     })
 
@@ -158,11 +157,11 @@ export function CreateTripPage() {
           closeConfirmTripModal={closeConfirmTripModal}
           createTrip={createTrip}
           setOwnerName={setOwnerName}
-          setOwnerEmail={setOwnerEmail}
           destination={destination}
           dataTripFrom={eventStartAndEndDates?.from?.getDate()}
           dataTripTo={eventStartAndEndDates?.to?.getDate()}
           dataTripMonth={eventStartAndEndDates?.from?.toLocaleString('default', { month: 'long' })}
+          ownerName={ownerName}
         />
       )}
     </div>

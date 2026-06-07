@@ -5,23 +5,23 @@ import { Button } from "../../components/button";
 interface ConfirmTripModalProps {
   closeConfirmTripModal: () => void
   setOwnerName: (name: string) => void;
-  setOwnerEmail: (email: string) => void;
   createTrip: (event: FormEvent<HTMLFormElement>) => void;
   destination: string;
   dataTripFrom: number | undefined;
   dataTripTo: number | undefined;
   dataTripMonth: string | undefined;
+  ownerName: string;
 }
 
 export function ConfirmTripModal({
   closeConfirmTripModal,
   createTrip,
-  setOwnerEmail,
   setOwnerName,
   destination,
   dataTripFrom,
   dataTripTo,
-  dataTripMonth
+  dataTripMonth,
+  ownerName
 }: ConfirmTripModalProps) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
@@ -35,7 +35,7 @@ export function ConfirmTripModal({
           </div>
 
           <p className="text-sm text-zinc-400">
-          Para concluir a criação da viagem para <span className="font-semibold text-zinc-100">{destination}</span> nas datas de <span className="font-semibold text-zinc-100">{dataTripFrom} a {dataTripTo} de {dataTripMonth} de 2024</span> preencha seus dados abaixo:
+            Para concluir a criação da viagem para <span className="font-semibold text-zinc-100">{destination}</span> nas datas de <span className="font-semibold text-zinc-100">{dataTripFrom} a {dataTripTo} de {dataTripMonth} de 2024</span> preencha seu nome abaixo:
           </p>
         </div>
         
@@ -45,20 +45,10 @@ export function ConfirmTripModal({
             <input
               type="text"
               name="name"
+              value={ownerName}
               placeholder="Seu nome completo"
               className="bg-transparent text-lg placeholder-zinc-400 outline-none flex-1"
               onChange={event => setOwnerName(event.target.value)}
-            />
-          </div>
-
-          <div className="h-14 px-4 bg-zinc-950 border border-zinc-800 rounded-lg flex items-center gap-2">
-            <User className="text-zinc-400 size-5" />
-            <input
-              type="email"
-              name="email"
-              placeholder="Seu e-mail pessoal"
-              className="bg-transparent text-lg placeholder-zinc-400 outline-none flex-1"
-              onChange={event => setOwnerEmail(event.target.value)}
             />
           </div>
 

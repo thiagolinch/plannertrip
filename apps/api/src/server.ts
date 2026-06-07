@@ -18,6 +18,7 @@ import { createInvite } from './routes/create-invite'
 import { updateTrip } from './routes/update-trip'
 import { getTripDetails } from './routes/get-trip-details'
 import { getParticipant } from './routes/get-participant'
+import { getTrips } from './routes/get-trips'
 import { errorHandler } from './error-handler'
 import { env } from './env'
 
@@ -48,6 +49,7 @@ app.register(createInvite)
 app.register(updateTrip)
 app.register(getTripDetails)
 app.register(getParticipant)
+app.register(getTrips)
 
 const port = Number(process.env.PORT) || 3000
 
