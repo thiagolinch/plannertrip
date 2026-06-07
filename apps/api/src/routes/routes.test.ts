@@ -416,6 +416,99 @@ describe('Trip Routes', () => {
     expect(response.statusCode).toBe(302) // Redirect status code
     expect(mockTripsStore[0].is_confirmed).toBe(true)
   })
+
+  it('should successfully confirm a trip via PATCH endpoint when owner is authenticated', async () => {
+    const tripId = randomUUID()
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: false
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: true,
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'Friend',
+      email: 'friend@example.com',
+      is_owner: false,
+      is_confirmed: false
+    })
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/trips/${tripId}/confirm`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    const body = JSON.parse(response.body)
+    expect(body.success).toBe(true)
+    expect(mockTripsStore[0].is_confirmed).toBe(true)
+  })
+
+  it('should fail to confirm a trip via PATCH endpoint if user is not the owner', async () => {
+    const tripId = randomUUID()
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: false
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'otherowner@example.com',
+      is_owner: true,
+      is_confirmed: true
+    })
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/trips/${tripId}/confirm`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(400)
+    const body = JSON.parse(response.body)
+    expect(body.message).toContain('Access denied')
+  })
+
+  it('should fail to confirm a trip via PATCH endpoint if unauthenticated', async () => {
+    const tripId = randomUUID()
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/trips/${tripId}/confirm`
+    })
+
+    expect(response.statusCode).toBe(401)
+  })
+
+  it('should fail to confirm a trip via PATCH endpoint if trip does not exist', async () => {
+    const tripId = randomUUID()
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/trips/${tripId}/confirm`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(400)
+    const body = JSON.parse(response.body)
+    expect(body.message).toContain('Trip not found')
+  })
 })
 
 describe('Activities Routes', () => {

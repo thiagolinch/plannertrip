@@ -18,6 +18,7 @@ import { getTripDetails } from './routes/get-trip-details'
 import { getParticipant } from './routes/get-participant'
 import { getTrips } from './routes/get-trips'
 import { confirmParticipantApi } from './routes/confirm-participant-api'
+import { confirmTripApi } from './routes/confirm-trip-api'
 import { errorHandler } from './error-handler'
 
 export function buildApp() {
@@ -50,6 +51,7 @@ export function buildApp() {
   app.register(getParticipant)
   app.register(getTrips)
   app.register(confirmParticipantApi)
+  app.register(confirmTripApi)
 
   return app
 }
