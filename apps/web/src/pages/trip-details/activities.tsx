@@ -1,26 +1,52 @@
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, Edit2, Trash2, MapPin } from "lucide-react";
 import { api } from "../../lib/axios";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { EditActivityModal } from "./edit-activity-modal";
 
 interface Activity {
-  date: string;
-  activities: {
-    id: string;
-    title: string;
-    occurs_at: string;
-  }[]
+  id: string;
+  title: string;
+  occurs_at: string;
+  local: string | null;
 }
 
-export function Activities() {
-  const { tripId } = useParams()
-  const [activities, setActivities] = useState<Activity[]>([])
+interface ActivityCategory {
+  date: string;
+  activities: Activity[];
+}
 
-  useEffect(() => {
+interface ActivitiesProps {
+  isOwner: boolean;
+}
+
+export function Activities({ isOwner }: ActivitiesProps) {
+  const { tripId } = useParams()
+  const [activities, setActivities] = useState<ActivityCategory[]>([])
+  const [selectedEditActivity, setSelectedEditActivity] = useState<Activity | null>(null)
+
+  const fetchActivities = useCallback(() => {
     api.get(`trips/${tripId}/activities`).then(response => setActivities(response.data.activities))
   }, [tripId])
+
+  useEffect(() => {
+    fetchActivities()
+  }, [fetchActivities])
+
+  async function handleDeleteActivity(activityId: string) {
+    const confirmDelete = window.confirm("Deseja realmente remover esta atividade?")
+    if (!confirmDelete) return
+
+    try {
+      await api.delete(`/activities/${activityId}`)
+      fetchActivities()
+    } catch (error) {
+      console.error("Erro ao deletar atividade:", error)
+      alert("Erro ao deletar atividade.")
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -32,16 +58,44 @@ export function Activities() {
               <span className="text-xs text-zinc-500">{format(new Date(category.date), 'EEEE', { locale: ptBR })}</span>
             </div>
             {category.activities.length > 0 ? (
-              <div>
+              <div className="space-y-2">
                 {category.activities.map(activity => {
                   return (
-                    <div key={activity.id} className="space-y-2.5">
-                      <div className="px-4 py-2.5 bg-zinc-900 rounded-xl shadow-shape flex items-center gap-3">
-                        <CircleCheck className="size-5 text-lime-300" />
-                        <span className="text-zinc-100">{activity.title}</span>
-                        <span className="text-zinc-400 text-sm ml-auto">
+                    <div key={activity.id} className="px-4 py-2.5 bg-zinc-900 rounded-xl shadow-shape flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <CircleCheck className="size-5 text-lime-300 shrink-0" />
+                        <div className="space-y-0.5 min-w-0">
+                          <span className="block text-zinc-100 font-medium truncate">{activity.title}</span>
+                          {activity.local && (
+                            <span className="flex items-center gap-1 text-xs text-zinc-400">
+                              <MapPin className="size-3.5 shrink-0" />
+                              <span className="truncate">{activity.local}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 shrink-0">
+                        <span className="text-zinc-400 text-sm">
                           {format(new Date(activity.occurs_at), 'HH:mm')}h
                         </span>
+                        <div className="flex items-center gap-1.5 border-l border-zinc-800 pl-4">
+                          <button
+                            onClick={() => setSelectedEditActivity(activity)}
+                            className="text-zinc-400 hover:text-zinc-200 transition-colors p-1"
+                            title="Editar atividade"
+                          >
+                            <Edit2 className="size-4" />
+                          </button>
+                          {isOwner && (
+                            <button
+                              onClick={() => handleDeleteActivity(activity.id)}
+                              className="text-zinc-400 hover:text-red-400 transition-colors p-1"
+                              title="Excluir atividade"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )
@@ -53,6 +107,14 @@ export function Activities() {
           </div>
         )
       })}
+
+      {selectedEditActivity && (
+        <EditActivityModal
+          activity={selectedEditActivity}
+          closeEditActivityModal={() => setSelectedEditActivity(null)}
+          onRefreshActivities={fetchActivities}
+        />
+      )}
     </div>
   )
 }

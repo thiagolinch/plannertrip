@@ -96,6 +96,10 @@ vi.mock('../lib/firebase', () => {
                   data = mockTripsStore.find(t => t.id === id)
                 } else if (colName === 'participants') {
                   data = mockParticipantsStore.find(p => p.id === id)
+                } else if (colName === 'activities') {
+                  data = mockActivitiesStore.find(a => a.id === id)
+                } else if (colName === 'links') {
+                  data = mockLinksStore.find(l => l.id === id)
                 }
                 return {
                   exists: !!data,
@@ -120,6 +124,10 @@ vi.mock('../lib/firebase', () => {
                   doc = mockTripsStore.find(t => t.id === id)
                 } else if (colName === 'participants') {
                   doc = mockParticipantsStore.find(p => p.id === id)
+                } else if (colName === 'activities') {
+                  doc = mockActivitiesStore.find(a => a.id === id)
+                } else if (colName === 'links') {
+                  doc = mockLinksStore.find(l => l.id === id)
                 }
                 if (doc) {
                   Object.assign(doc, data)
@@ -769,6 +777,128 @@ describe('Activities Routes', () => {
     const day1Activities = body.activities[0].activities
     expect(day1Activities[0].title).toBe('Activity 1')
     expect(day1Activities[1].title).toBe('Activity 2')
+  })
+
+  it('should successfully delete an activity if user is the trip owner', async () => {
+    const tripId = randomUUID()
+    const activityId = randomUUID()
+
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: true,
+      is_confirmed: true
+    })
+    mockActivitiesStore.push({
+      id: activityId,
+      trip_id: tripId,
+      title: 'Academia',
+      occurs_at: new Date(Date.now() + 86400000 + 10000).toISOString()
+    })
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/activities/${activityId}`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    const body = JSON.parse(response.body)
+    expect(body.success).toBe(true)
+    expect(mockActivitiesStore.find(a => a.id === activityId)).toBeUndefined()
+  })
+
+  it('should fail to delete an activity if user is not the trip owner', async () => {
+    const tripId = randomUUID()
+    const activityId = randomUUID()
+
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'Friend',
+      email: 'john@example.com',
+      is_owner: false,
+      is_confirmed: true
+    })
+    mockActivitiesStore.push({
+      id: activityId,
+      trip_id: tripId,
+      title: 'Academia',
+      occurs_at: new Date(Date.now() + 86400000 + 10000).toISOString()
+    })
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/activities/${activityId}`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(400)
+  })
+
+  it('should successfully update an activity if user is a participant', async () => {
+    const tripId = randomUUID()
+    const activityId = randomUUID()
+
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'Friend',
+      email: 'john@example.com',
+      is_owner: false,
+      is_confirmed: true
+    })
+    mockActivitiesStore.push({
+      id: activityId,
+      trip_id: tripId,
+      title: 'Academia',
+      occurs_at: new Date(Date.now() + 86400000 + 10000).toISOString(),
+      local: 'Antiga academia'
+    })
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/activities/${activityId}`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      },
+      payload: {
+        title: 'Nova Academia',
+        local: 'Nova academia moderna'
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    const body = JSON.parse(response.body)
+    expect(body.success).toBe(true)
+
+    const updated = mockActivitiesStore.find(a => a.id === activityId)
+    expect(updated.title).toBe('Nova Academia')
+    expect(updated.local).toBe('Nova academia moderna')
   })
 })
 

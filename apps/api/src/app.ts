@@ -22,6 +22,8 @@ import { confirmTripApi } from './routes/confirm-trip-api'
 import { deleteTrip } from './routes/delete-trip'
 import { deleteParticipant } from './routes/delete-participant'
 import { updateParticipant } from './routes/update-participant'
+import { deleteActivity } from './routes/delete-activity'
+import { updateActivity } from './routes/update-activity'
 import { errorHandler } from './error-handler'
 
 export function buildApp() {
@@ -58,6 +60,8 @@ export function buildApp() {
   app.register(deleteTrip)
   app.register(deleteParticipant)
   app.register(updateParticipant)
+  app.register(deleteActivity)
+  app.register(updateActivity)
 
   return app
 }

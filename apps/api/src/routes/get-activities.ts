@@ -55,6 +55,7 @@ export async function getActivities(app: FastifyInstance) {
         id: doc.id,
         title: doc.data().title,
         occurs_at: doc.data().occurs_at,
+        local: doc.data().local || null,
       }))
 
       // Sort activities chronologically by occurs_at

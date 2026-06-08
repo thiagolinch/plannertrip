@@ -19,12 +19,13 @@ export async function createActivity(app: FastifyInstance) {
         body: z.object({
           title: z.string().min(4),
           occurs_at: z.coerce.date(),
+          local: z.string().optional().nullable(),
         }),
       },
     },
     async (request) => {
       const { tripId } = request.params
-      const { title, occurs_at } = request.body
+      const { title, occurs_at, local } = request.body
 
       const userEmail = request.user?.email
       if (!userEmail) {
@@ -65,6 +66,7 @@ export async function createActivity(app: FastifyInstance) {
         trip_id: tripId,
         title,
         occurs_at: occurs_at.toISOString(),
+        local: local || null,
       })
 
       return { activityId }

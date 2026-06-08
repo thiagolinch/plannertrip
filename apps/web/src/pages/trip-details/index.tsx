@@ -121,7 +121,7 @@ export function TripDetailsPage() {
             </button>
           </div>
 
-          <Activities />
+          <Activities isOwner={myParticipant?.is_owner || false} />
         </div>
 
         <div className="w-full md:w-80 space-y-6">
