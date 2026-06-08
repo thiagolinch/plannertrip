@@ -83,7 +83,7 @@ export function TripDetailsPage() {
               ⚠️ Esta viagem ainda não foi confirmada! Confirme para disparar os convites por e-mail para todos os convidados.
             </span>
           </div>
-          <button 
+          <button
             onClick={handleConfirmTrip}
             disabled={isConfirmingTrip}
             className="bg-orange-400 text-zinc-950 rounded-lg px-5 py-2.5 font-medium flex items-center justify-center gap-2 hover:bg-orange-500 shrink-0"
@@ -100,7 +100,7 @@ export function TripDetailsPage() {
               🎉 Você foi convidado(a) para esta viagem! Confirme sua presença para começar a colaborar.
             </span>
           </div>
-          <button 
+          <button
             onClick={handleConfirmPresence}
             disabled={isConfirming}
             className="bg-lime-300 text-lime-950 rounded-lg px-5 py-2.5 font-medium flex items-center justify-center gap-2 hover:bg-lime-400 shrink-0"
@@ -134,7 +134,7 @@ export function TripDetailsPage() {
       </main>
 
       {isCreateActivityModalOpen && (
-        <CreateActivityModal 
+        <CreateActivityModal
           closeCreateActivityModal={closeCreateActivityModal}
         />
       )}

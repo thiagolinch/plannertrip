@@ -1,4 +1,4 @@
-import { MapPin, Calendar, Settings2, ArrowRight, X } from "lucide-react";
+import { MapPin, Calendar, Settings2, ArrowRight, CircleX, X } from "lucide-react";
 import { Button } from "../../../components/button";
 import { useState } from "react";
 import { DateRange, DayPicker } from "react-day-picker";
@@ -32,9 +32,13 @@ export function DestinationAndDateStep({
     setIsDatePickerOpen(false);
   }
 
-  const displayedDate = eventStartAndEndDates && eventStartAndEndDates.from && eventStartAndEndDates.to 
-  ? format(eventStartAndEndDates.from, "d' de 'LLL").concat(' até ').concat(format(eventStartAndEndDates.to, "d' de 'LLL"))
-  : null
+  const handleDashboard = () => {
+    window.location.href = "/"
+  }
+
+  const displayedDate = eventStartAndEndDates && eventStartAndEndDates.from && eventStartAndEndDates.to
+    ? format(eventStartAndEndDates.from, "d' de 'LLL").concat(' até ').concat(format(eventStartAndEndDates.to, "d' de 'LLL"))
+    : null
 
   return (
     <div className="h-16 bg-zinc-900 px-4 rounded-xl flex items-center shadow-shape gap-3">
@@ -69,7 +73,7 @@ export function DestinationAndDateStep({
                 </button>
               </div>
             </div>
-            
+
             <DayPicker mode="range" selected={eventStartAndEndDates} onSelect={setEventStartAndEndDates} />
           </div>
         </div>
@@ -83,11 +87,17 @@ export function DestinationAndDateStep({
           <Settings2 className="size-5" />
         </Button>
       ) : (
-        <Button onClick={openGuestsInput}>
-          Continuar
-          <ArrowRight className="size-5" />
-        </Button>
-      )}
-    </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={openGuestsInput}>
+            Continuar
+            <ArrowRight className="size-5" />
+          </Button>
+          <Button onClick={handleDashboard} variant="danger">
+            <CircleX className="size-5 " />
+          </Button>
+        </div>
+      )
+      }
+    </div >
   )
 }
