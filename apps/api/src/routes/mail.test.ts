@@ -4,6 +4,7 @@ import path from 'path'
 import 'dotenv/config'
 import { buildEmailTemplate } from '../lib/email-template'
 import { dayjs } from '../lib/dayjs'
+import { getMailClient } from '../lib/mail'
 
 describe('Email Delivery Test Suite', () => {
   const host = process.env.SMTP_HOST
@@ -145,6 +146,30 @@ describe('Email Delivery Test Suite', () => {
     })
 
     console.log("E-mail 'create-invite' enviado com sucesso!")
+    console.log(`Message ID: ${info.messageId}`)
+    expect(info.messageId).toBeDefined()
+  })
+
+  it('should send an email using getMailClient (bypassing via HTTP if Resend)', { timeout: 15000 }, async () => {
+    const client = await getMailClient()
+    const info = await client.sendMail({
+      from: {
+        name: 'Plann.er - Test Client',
+        address: from,
+      },
+      to: 'thglinchin18@gmail.com',
+      subject: 'Test sending via getMailClient helper',
+      html: '<p>Este é um teste usando getMailClient(). Se estiver usando Resend, deve ter ido via HTTP.</p>',
+      attachments: [
+        {
+          filename: 'logo.svg',
+          path: path.resolve(__dirname, '../assets/logo.svg'),
+          cid: 'logo'
+        }
+      ]
+    })
+
+    console.log("E-mail enviado via getMailClient com sucesso!")
     console.log(`Message ID: ${info.messageId}`)
     expect(info.messageId).toBeDefined()
   })
