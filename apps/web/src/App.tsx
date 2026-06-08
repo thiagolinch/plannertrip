@@ -3,12 +3,14 @@ import { CreateTripPage } from "./pages/create-trip"
 import { TripDetailsPage } from "./pages/trip-details"
 import { LoginPage } from "./pages/login"
 import { DashboardPage } from "./pages/dashboard"
+import { ErrorPage } from "./pages/error-page"
 import { ProtectedRoute } from "./components/protected-route"
 
 const router = createBrowserRouter([
   {
     path: "/login",
-    element: <LoginPage />
+    element: <LoginPage />,
+    errorElement: <ErrorPage />
   },
   {
     path: "/",
@@ -16,7 +18,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <DashboardPage />
       </ProtectedRoute>
-    )
+    ),
+    errorElement: <ErrorPage />
   },
   {
     path: "/trips/create",
@@ -24,7 +27,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <CreateTripPage />
       </ProtectedRoute>
-    )
+    ),
+    errorElement: <ErrorPage />
   },
   {
     path: "/trips/:tripId",
@@ -32,8 +36,13 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <TripDetailsPage />
       </ProtectedRoute>
-    )
+    ),
+    errorElement: <ErrorPage />
   },
+  {
+    path: "*",
+    element: <ErrorPage />
+  }
 ])
 
 export function App() {
