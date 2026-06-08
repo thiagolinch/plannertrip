@@ -52,11 +52,11 @@ export async function createActivity(app: FastifyInstance) {
 
       const tripData = tripDoc.data()!
 
-      if (dayjs(occurs_at).isBefore(tripData.starts_at)) {
+      if (dayjs.utc(occurs_at).isBefore(dayjs.utc(tripData.starts_at).startOf('day'))) {
         throw new ClientError('Invalid activity date: occurs before trip starts.')
       }
 
-      if (dayjs(occurs_at).isAfter(tripData.ends_at)) {
+      if (dayjs.utc(occurs_at).isAfter(dayjs.utc(tripData.ends_at).endOf('day'))) {
         throw new ClientError('Invalid activity date: occurs after trip ends.')
       }
 

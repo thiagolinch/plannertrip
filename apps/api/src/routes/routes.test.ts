@@ -721,7 +721,80 @@ describe('Activities Routes', () => {
       },
       payload: {
         title: 'Academia',
-        occurs_at: new Date(tripStart.getTime() - 10000).toISOString() // before trip starts
+        occurs_at: new Date(tripStart.getTime() - 86400000 * 2).toISOString() // before trip starts (2 days before)
+      }
+    })
+
+    expect(response.statusCode).toBe(400)
+    const body = JSON.parse(response.body)
+    expect(body.message).toContain('Invalid activity date')
+  })
+
+  it('should successfully add an activity on the last day of the trip, even if it is after the exact hours of ends_at', async () => {
+    const tripId = randomUUID()
+    const tripStart = new Date('2026-06-10T00:00:00.000Z')
+    const tripEnd = new Date('2026-06-15T00:00:00.000Z')
+    
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: tripStart.toISOString(),
+      ends_at: tripEnd.toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: true,
+      is_confirmed: true
+    })
+
+    const response = await app.inject({
+      method: 'POST',
+      url: `/trips/${tripId}/activities`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      },
+      payload: {
+        title: 'Checkout',
+        occurs_at: new Date('2026-06-15T14:00:00.000Z').toISOString()
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    expect(mockActivitiesStore.find(a => a.title === 'Checkout')).toBeDefined()
+  })
+
+  it('should fail adding activity if occurs_at is after the last day of the trip', async () => {
+    const tripId = randomUUID()
+    const tripStart = new Date('2026-06-10T00:00:00.000Z')
+    const tripEnd = new Date('2026-06-15T00:00:00.000Z')
+    
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: tripStart.toISOString(),
+      ends_at: tripEnd.toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: true,
+      is_confirmed: true
+    })
+
+    const response = await app.inject({
+      method: 'POST',
+      url: `/trips/${tripId}/activities`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      },
+      payload: {
+        title: 'Day After',
+        occurs_at: new Date('2026-06-16T10:00:00.000Z').toISOString()
       }
     })
 

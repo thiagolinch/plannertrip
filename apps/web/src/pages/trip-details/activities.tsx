@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { EditActivityModal } from "./edit-activity-modal";
+import { ActivityDetailsModal } from "./activity-details-modal";
 
 interface Activity {
   id: string;
@@ -26,6 +27,7 @@ export function Activities({ isOwner }: ActivitiesProps) {
   const { tripId } = useParams()
   const [activities, setActivities] = useState<ActivityCategory[]>([])
   const [selectedEditActivity, setSelectedEditActivity] = useState<Activity | null>(null)
+  const [selectedDetailsActivity, setSelectedDetailsActivity] = useState<Activity | null>(null)
 
   const fetchActivities = useCallback(() => {
     api.get(`trips/${tripId}/activities`).then(response => setActivities(response.data.activities))
@@ -61,13 +63,17 @@ export function Activities({ isOwner }: ActivitiesProps) {
               <div className="space-y-2">
                 {category.activities.map(activity => {
                   return (
-                    <div key={activity.id} className="px-4 py-2.5 bg-zinc-900 rounded-xl shadow-shape flex items-center justify-between gap-3">
+                    <div 
+                      key={activity.id} 
+                      onClick={() => setSelectedDetailsActivity(activity)}
+                      className="px-4 py-2.5 bg-zinc-900 rounded-xl shadow-shape flex items-center justify-between gap-3 cursor-pointer hover:bg-zinc-800/80 transition-colors group"
+                    >
                       <div className="flex items-center gap-3 min-w-0">
-                        <CircleCheck className="size-5 text-lime-300 shrink-0" />
+                        <CircleCheck className="size-5 text-lime-300 shrink-0 group-hover:text-lime-400 transition-colors" />
                         <div className="space-y-0.5 min-w-0">
-                          <span className="block text-zinc-100 font-medium truncate">{activity.title}</span>
+                          <span className="block text-zinc-100 font-medium truncate group-hover:text-zinc-50 transition-colors">{activity.title}</span>
                           {activity.local && (
-                            <span className="flex items-center gap-1 text-xs text-zinc-400">
+                            <span className="flex items-center gap-1 text-xs text-zinc-400 group-hover:text-zinc-350 transition-colors">
                               <MapPin className="size-3.5 shrink-0" />
                               <span className="truncate">{activity.local}</span>
                             </span>
@@ -80,7 +86,10 @@ export function Activities({ isOwner }: ActivitiesProps) {
                         </span>
                         <div className="flex items-center gap-1.5 border-l border-zinc-800 pl-4">
                           <button
-                            onClick={() => setSelectedEditActivity(activity)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedEditActivity(activity)
+                            }}
                             className="text-zinc-400 hover:text-zinc-200 transition-colors p-1"
                             title="Editar atividade"
                           >
@@ -88,7 +97,10 @@ export function Activities({ isOwner }: ActivitiesProps) {
                           </button>
                           {isOwner && (
                             <button
-                              onClick={() => handleDeleteActivity(activity.id)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteActivity(activity.id)
+                              }}
                               className="text-zinc-400 hover:text-red-400 transition-colors p-1"
                               title="Excluir atividade"
                             >
@@ -113,6 +125,18 @@ export function Activities({ isOwner }: ActivitiesProps) {
           activity={selectedEditActivity}
           closeEditActivityModal={() => setSelectedEditActivity(null)}
           onRefreshActivities={fetchActivities}
+        />
+      )}
+
+      {selectedDetailsActivity && (
+        <ActivityDetailsModal
+          activity={selectedDetailsActivity}
+          closeActivityDetailsModal={() => setSelectedDetailsActivity(null)}
+          onOpenEditModal={() => {
+            const act = selectedDetailsActivity
+            setSelectedDetailsActivity(null)
+            setSelectedEditActivity(act)
+          }}
         />
       )}
     </div>
