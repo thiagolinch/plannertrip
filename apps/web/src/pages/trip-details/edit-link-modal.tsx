@@ -49,7 +49,7 @@ export function EditLinkModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="w-[640px] max-w-full rounded-xl py-5 px-6 shadow-shape bg-zinc-900 space-y-5">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -93,11 +93,11 @@ export function EditLinkModal({
             />
           </div>
 
-          <div className="flex gap-2">
-            <Button type="button" variant="secondary" className="flex-1" onClick={closeEditLinkModal} disabled={isSavingLink}>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button type="button" variant="secondary" className="w-full" onClick={closeEditLinkModal} disabled={isSavingLink}>
               Cancelar
             </Button>
-            <Button type="submit" className="flex-1" disabled={isSavingLink}>
+            <Button type="submit" className="w-full" disabled={isSavingLink}>
               {isSavingLink ? "Salvando..." : "Salvar alterações"}
             </Button>
           </div>

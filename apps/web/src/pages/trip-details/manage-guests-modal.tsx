@@ -102,7 +102,7 @@ export function ManageGuestsModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="w-[640px] max-w-full rounded-xl py-5 px-6 shadow-shape bg-zinc-900 space-y-5">
         <div className="space-y-2">
           <div className="flex items-center justify-between">

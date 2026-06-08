@@ -25,7 +25,7 @@ export function ActivityDetailsModal({
   const formattedTime = format(dateObj, "HH:mm");
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="w-[540px] max-w-full rounded-xl py-5 px-6 shadow-shape bg-zinc-900 space-y-6 border border-zinc-800">
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
           <div className="flex items-center gap-2">
@@ -80,11 +80,11 @@ export function ActivityDetailsModal({
           </div>
         </div>
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Button
             type="button"
             variant="secondary"
-            className="flex-1 flex items-center justify-center gap-2"
+            className="w-full flex items-center justify-center gap-2"
             onClick={onOpenEditModal}
           >
             <Edit2 className="size-4" />
@@ -92,7 +92,7 @@ export function ActivityDetailsModal({
           </Button>
           <Button
             type="button"
-            className="flex-1"
+            className="w-full"
             onClick={closeActivityDetailsModal}
           >
             Fechar

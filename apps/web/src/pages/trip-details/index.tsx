@@ -110,12 +110,12 @@ export function TripDetailsPage() {
         </div>
       )}
 
-      <main className="flex flex-col md:flex-row gap-8 md:gap-16 px-4">
+      <main className="flex flex-col lg:flex-row gap-8 lg:gap-16 px-4">
         <div className="flex-1 space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
             <h2 className="text-3xl font-semibold">Atividades</h2>
 
-            <button onClick={openCreateActivityModal} className="bg-lime-300 text-lime-950 rounded-lg px-5 py-2 font-medium flex items-center gap-2 hover:bg-lime-400">
+            <button onClick={openCreateActivityModal} className="bg-lime-300 text-lime-950 rounded-lg px-5 py-2 font-medium flex items-center justify-center gap-2 hover:bg-lime-400 w-full sm:w-auto">
               <Plus className="size-5" />
               Cadastrar atividade
             </button>
@@ -124,7 +124,7 @@ export function TripDetailsPage() {
           <Activities isOwner={myParticipant?.is_owner || false} />
         </div>
 
-        <div className="w-full md:w-80 space-y-6">
+        <div className="w-full lg:w-80 space-y-6">
           <ImportantLinks isOwner={myParticipant?.is_owner || false} />
 
           <div className="w-full h-px bg-zinc-800" />

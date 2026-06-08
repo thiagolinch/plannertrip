@@ -41,19 +41,19 @@ export function DestinationAndDateStep({
     : null
 
   return (
-    <div className="h-16 bg-zinc-900 px-4 rounded-xl flex items-center shadow-shape gap-3">
-      <div className="flex items-center gap-2 flex-1">
+    <div className="min-h-16 h-auto md:h-16 bg-zinc-900 px-4 py-3 md:py-0 rounded-xl flex flex-col md:flex-row items-center shadow-shape gap-3">
+      <div className="flex items-center gap-2 flex-1 w-full">
         <MapPin className="size-5 text-zinc-400" />
         <input
           disabled={isGuestsInputOpen}
           type="text"
           placeholder="Para onde você vai?"
-          className="bg-transparent text-lg placeholder-zinc-400 outline-none flex-1"
+          className="bg-transparent text-lg placeholder-zinc-400 outline-none flex-1 w-full"
           onChange={event => setDestination(event.target.value)}
         />
       </div>
 
-      <button disabled={isGuestsInputOpen} onClick={openDatePicker} className="flex items-center gap-2 text-left w-[240px]">
+      <button disabled={isGuestsInputOpen} onClick={openDatePicker} className="flex items-center gap-2 text-left w-full md:w-[240px] py-2 md:py-0">
         <Calendar className="size-5 text-zinc-400" />
         <span
           className="text-lg text-zinc-400 w-40 flex-1"
@@ -63,8 +63,8 @@ export function DestinationAndDateStep({
       </button>
 
       {isDatePickerOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
-          <div className="rounded-xl py-5 px-6 shadow-shape bg-zinc-900 space-y-5">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="rounded-xl py-5 px-6 shadow-shape bg-zinc-900 space-y-5 max-w-full">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h2 className="font-lg font-semibold">Selecione a data</h2>
@@ -79,20 +79,20 @@ export function DestinationAndDateStep({
         </div>
       )}
 
-      <div className="w-px h-6 bg-zinc-800" />
+      <div className="hidden md:block w-px h-6 bg-zinc-800" />
 
       {isGuestsInputOpen ? (
-        <Button onClick={closeGuestsInput} variant="secondary">
+        <Button onClick={closeGuestsInput} variant="secondary" className="w-full md:w-auto justify-center">
           Alterar local/data
           <Settings2 className="size-5" />
         </Button>
       ) : (
-        <div className="flex items-center gap-2">
-          <Button onClick={openGuestsInput}>
+        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+          <Button onClick={openGuestsInput} className="flex-1 md:flex-none justify-center">
             Continuar
             <ArrowRight className="size-5" />
           </Button>
-          <Button onClick={handleDashboard} variant="danger">
+          <Button onClick={handleDashboard} variant="danger" className="justify-center">
             <CircleX className="size-5 " />
           </Button>
         </div>
