@@ -1,9 +1,9 @@
 import admin from 'firebase-admin'
 
 if (!admin.apps.length) {
-  const projectId = process.env.FIREBASE_PROJECT_ID?.replace(/^"(.*)"$/, '$1')
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.replace(/^"(.*)"$/, '$1')
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/^"(.*)"$/, '$1')
+  const projectId = process.env.FIREBASE_PROJECT_ID
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY
 
   if (projectId && clientEmail && privateKey) {
     admin.initializeApp({
