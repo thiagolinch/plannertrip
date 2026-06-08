@@ -52,6 +52,7 @@ export async function getParticipants(app: FastifyInstance) {
         name: doc.data().name,
         email: doc.data().email,
         is_confirmed: doc.data().is_confirmed,
+        is_owner: doc.data().is_owner || false,
       }))
 
       return { participants }

@@ -4,16 +4,19 @@ import { env } from '../env'
 export async function getMailClient() {
   // If custom SMTP config is provided, use it
   if (env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASS) {
+    console.log(`[SMTP] Usando transportador personalizado: ${env.SMTP_HOST}:${env.SMTP_PORT} (secure: ${env.SMTP_SECURE || env.SMTP_PORT === 465})`)
     return nodemailer.createTransport({
       host: env.SMTP_HOST,
       port: env.SMTP_PORT,
-      secure: env.SMTP_SECURE === 'true',
+      secure: env.SMTP_SECURE || env.SMTP_PORT === 465,
       auth: {
         user: env.SMTP_USER,
         pass: env.SMTP_PASS,
       },
     })
   }
+
+  console.log('[SMTP] Transportador personalizado incompleto. Usando Ethereal Email (fallback).')
 
   // Fallback to Ethereal Email for development
   const account = await nodemailer.createTestAccount()

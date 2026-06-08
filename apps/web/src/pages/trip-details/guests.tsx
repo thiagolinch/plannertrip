@@ -1,6 +1,6 @@
 import { CheckCircle2, CircleDashed, UserCog } from "lucide-react";
 import { Button } from "../../components/button";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../lib/axios";
 import { ManageGuestsModal } from "./manage-guests-modal";
@@ -10,6 +10,7 @@ interface Participant {
   name: string | null;
   email: string;
   is_confirmed: boolean;
+  is_owner: boolean;
 }
 
 interface GuestsProps {
@@ -21,13 +22,13 @@ export function Guests({ isOwner }: GuestsProps) {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [isManageGuestsModalOpen, setIsManageGuestsModalOpen] = useState(false)
 
-  function fetchParticipants() {
+  const fetchParticipants = useCallback(() => {
     api.get(`trips/${tripId}/participants`).then(response => setParticipants(response.data.participants))
-  }
+  }, [tripId])
 
   useEffect(() => {
     fetchParticipants()
-  }, [tripId])
+  }, [fetchParticipants])
 
   function openManageGuestsModal() {
     setIsManageGuestsModalOpen(true)

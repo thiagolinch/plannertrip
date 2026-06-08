@@ -56,6 +56,17 @@ export async function createInvite(app: FastifyInstance) {
 
       const tripData = tripDoc.data()!
 
+      // Check if participant is already invited
+      const existingParticipant = await db
+        .collection('participants')
+        .where('trip_id', '==', tripId)
+        .where('email', '==', email)
+        .get()
+
+      if (!existingParticipant.empty) {
+        throw new ClientError('This email has already been invited to this trip.')
+      }
+
       // Add guest to flat participants collection
       const participantId = randomUUID()
       const participantRef = db.collection('participants').doc(participantId)
@@ -68,42 +79,44 @@ export async function createInvite(app: FastifyInstance) {
         is_confirmed: false,
       })
 
-      const formattedStartDate = dayjs(tripData.starts_at).format('LL')
+      // Send email only if the trip is confirmed
+      if (tripData.is_confirmed) {
+        const formattedStartDate = dayjs(tripData.starts_at).format('LL')
+        const mail = await getMailClient()
+        const confirmationLink = `${env.API_BASE_URL}/participants/${participantId}/confirm`
 
-      const mail = await getMailClient()
-      const confirmationLink = `${env.API_BASE_URL}/participants/${participantId}/confirm`
+        const html = buildEmailTemplate({
+          destination: tripData.destination,
+          startsAt: tripData.starts_at,
+          endsAt: tripData.ends_at,
+          title: 'Confirmar presença na viagem',
+          bodyHtml: `
+            Você foi convidado(a) para participar de uma viagem para <strong class="highlight">${tripData.destination}</strong> nas datas de <strong class="highlight">${dayjs(tripData.starts_at).format('LL')}</strong> até <strong class="highlight">${dayjs(tripData.ends_at).format('LL')}</strong>.
+            <p style="margin-top: 16px;">Para confirmar sua presença e ver todos os detalhes da viagem, clique no botão abaixo:</p>
+          `,
+          buttonText: 'Confirmar presença',
+          buttonLink: confirmationLink
+        })
 
-      const html = buildEmailTemplate({
-        destination: tripData.destination,
-        startsAt: tripData.starts_at,
-        endsAt: tripData.ends_at,
-        title: 'Confirmar presença na viagem',
-        bodyHtml: `
-          Você foi convidado(a) para participar de uma viagem para <strong class="highlight">${tripData.destination}</strong> nas datas de <strong class="highlight">${dayjs(tripData.starts_at).format('LL')}</strong> até <strong class="highlight">${dayjs(tripData.ends_at).format('LL')}</strong>.
-          <p style="margin-top: 16px;">Para confirmar sua presença e ver todos os detalhes da viagem, clique no botão abaixo:</p>
-        `,
-        buttonText: 'Confirmar presença',
-        buttonLink: confirmationLink
-      })
+        const message = await mail.sendMail({
+          from: {
+            name: 'Equipe plann.er',
+            address: env.MAIL_FROM || 'oi@plann.er',
+          },
+          to: email,
+          subject: `Confirme sua presença na viagem para ${tripData.destination} em ${formattedStartDate}`,
+          html,
+          attachments: [
+            {
+              filename: 'logo.svg',
+              path: path.resolve(__dirname, '../assets/logo.svg'),
+              cid: 'logo'
+            }
+          ]
+        })
 
-      const message = await mail.sendMail({
-        from: {
-          name: 'Equipe plann.er',
-          address: env.MAIL_FROM || 'oi@plann.er',
-        },
-        to: email,
-        subject: `Confirme sua presença na viagem para ${tripData.destination} em ${formattedStartDate}`,
-        html,
-        attachments: [
-          {
-            filename: 'logo.svg',
-            path: path.resolve(__dirname, '../assets/logo.svg'),
-            cid: 'logo'
-          }
-        ]
-      })
-
-      console.log(nodemailer.getTestMessageUrl(message))
+        console.log(nodemailer.getTestMessageUrl(message))
+      }
 
       return { participantId }
     },

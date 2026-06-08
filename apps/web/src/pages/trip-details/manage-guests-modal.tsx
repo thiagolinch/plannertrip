@@ -1,14 +1,16 @@
-import { AtSign, CheckCircle2, CircleDashed, Plus, X } from "lucide-react";
+import { AtSign, CheckCircle2, CircleDashed, Plus, X, Edit2, Trash2, Check } from "lucide-react";
 import { Button } from "../../components/button";
 import { FormEvent, useState } from "react";
 import { api } from "../../lib/axios";
 import { useParams } from "react-router-dom";
+import { AxiosError } from "axios";
 
 interface Participant {
   id: string;
   name: string | null;
   email: string;
   is_confirmed: boolean;
+  is_owner: boolean;
 }
 
 interface ManageGuestsModalProps {
@@ -26,11 +28,15 @@ export function ManageGuestsModal({
 }: ManageGuestsModalProps) {
   const { tripId } = useParams();
   const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
+  const [editEmail, setEditEmail] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   async function handleInviteGuest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const data = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const data = new FormData(form);
     const email = data.get("email")?.toString();
 
     if (!email) {
@@ -42,12 +48,57 @@ export function ManageGuestsModal({
     try {
       await api.post(`/trips/${tripId}/invites`, { email });
       onRefreshParticipants();
-      event.currentTarget.reset();
+      form.reset();
+      alert("Convidado adicionado com sucesso!");
+      closeManageGuestsModal();
     } catch (error) {
-      console.error("Erro ao convidar participante:", error);
+      const axiosError = error as AxiosError<{ message?: string }>;
+      console.error("Erro ao convidar participante:", axiosError);
+      alert(axiosError.response?.data?.message || "Erro ao convidar participante.");
     } finally {
       setIsSendingInvite(false);
     }
+  }
+
+  async function handleDeleteParticipant(participantId: string) {
+    const confirmDelete = window.confirm("Deseja realmente remover este convidado da viagem?");
+    if (!confirmDelete) return;
+
+    try {
+      await api.delete(`/participants/${participantId}`);
+      onRefreshParticipants();
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      console.error("Erro ao remover convidado:", axiosError);
+      alert(axiosError.response?.data?.message || "Erro ao remover convidado.");
+    }
+  }
+
+  async function handleSaveEditParticipant(participantId: string) {
+    if (!editEmail) return;
+
+    setIsSavingEdit(true);
+    try {
+      await api.patch(`/participants/${participantId}`, { email: editEmail });
+      setEditingParticipantId(null);
+      onRefreshParticipants();
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      console.error("Erro ao atualizar e-mail do convidado:", axiosError);
+      alert(axiosError.response?.data?.message || "Erro ao atualizar e-mail.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }
+
+  function startEditing(participant: Participant) {
+    setEditingParticipantId(participant.id);
+    setEditEmail(participant.email);
+  }
+
+  function cancelEditing() {
+    setEditingParticipantId(null);
+    setEditEmail("");
   }
 
   return (
@@ -72,23 +123,70 @@ export function ManageGuestsModal({
             <div key={participant.id} className="flex items-center justify-between gap-4 p-2 bg-zinc-950/40 rounded-lg border border-zinc-800/40">
               <div className="space-y-1 min-w-0 flex-1">
                 <span className="block font-medium text-zinc-100 truncate">
-                  {participant.name ?? `Convidado ${index + 1}`}
+                  {participant.name ?? `Convidado ${index + 1}`} {participant.is_owner && <span className="text-xs text-lime-400 bg-lime-400/10 px-1.5 py-0.5 rounded ml-1">Organizador</span>}
                 </span>
-                <span className="block text-xs text-zinc-400 truncate">
-                  {participant.email}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                {participant.is_confirmed ? (
-                  <div className="flex items-center gap-1.5 bg-green-500/10 text-green-400 text-xs px-2 py-1 rounded-full border border-green-500/20">
-                    <CheckCircle2 className="size-3.5" />
-                    <span>Confirmado</span>
+                {editingParticipantId === participant.id ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      disabled={isSavingEdit}
+                      className="bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-100 outline-none focus:border-lime-300 flex-1"
+                    />
+                    <button
+                      onClick={() => handleSaveEditParticipant(participant.id)}
+                      disabled={isSavingEdit}
+                      className="text-green-400 hover:text-green-300 disabled:opacity-50 p-1"
+                    >
+                      <Check className="size-4" />
+                    </button>
+                    <button
+                      onClick={cancelEditing}
+                      disabled={isSavingEdit}
+                      className="text-red-400 hover:text-red-300 disabled:opacity-50 p-1"
+                    >
+                      <X className="size-4" />
+                    </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 bg-zinc-800 text-zinc-400 text-xs px-2 py-1 rounded-full border border-zinc-700">
-                    <CircleDashed className="size-3.5" />
-                    <span>Pendente</span>
+                  <span className="block text-xs text-zinc-400 truncate">
+                    {participant.email}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  {participant.is_confirmed ? (
+                    <div className="flex items-center gap-1.5 bg-green-500/10 text-green-400 text-xs px-2 py-1 rounded-full border border-green-500/20">
+                      <CheckCircle2 className="size-3.5" />
+                      <span>Confirmado</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 bg-zinc-800 text-zinc-400 text-xs px-2 py-1 rounded-full border border-zinc-700">
+                      <CircleDashed className="size-3.5" />
+                      <span>Pendente</span>
+                    </div>
+                  )}
+                </div>
+
+                {isOwner && !participant.is_owner && editingParticipantId !== participant.id && (
+                  <div className="flex items-center gap-1 border-l border-zinc-800 pl-3">
+                    <button
+                      onClick={() => startEditing(participant)}
+                      className="text-zinc-400 hover:text-zinc-200 p-1 transition-colors"
+                      title="Editar e-mail"
+                    >
+                      <Edit2 className="size-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteParticipant(participant.id)}
+                      className="text-zinc-400 hover:text-red-400 p-1 transition-colors"
+                      title="Remover convidado"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
                   </div>
                 )}
               </div>

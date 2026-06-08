@@ -11,7 +11,11 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  SMTP_SECURE: z.string().optional().default('false'),
+  SMTP_SECURE: z.preprocess((val) => {
+    if (typeof val === 'boolean') return val;
+    if (typeof val === 'string') return val.toLowerCase() === 'true';
+    return false;
+  }, z.boolean()).default(false),
   MAIL_FROM: z.string().email().optional().default('oi@plann.er'),
 })
 

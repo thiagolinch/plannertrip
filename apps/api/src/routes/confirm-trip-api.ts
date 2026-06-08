@@ -62,7 +62,7 @@ export async function confirmTripApi(app: FastifyInstance) {
       const formattedStartDate = dayjs(tripData.starts_at).format('LL')
       const formattedEndDate = dayjs(tripData.ends_at).format('LL')
       const mail = await getMailClient()
-      const guests = participants.filter(p => !p.is_owner)
+      const guests = participants.filter(p => !p.is_owner && !p.is_confirmed)
 
       await Promise.all(
         guests.map(async (participant) => {

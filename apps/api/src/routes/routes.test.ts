@@ -124,6 +124,17 @@ vi.mock('../lib/firebase', () => {
                 if (doc) {
                   Object.assign(doc, data)
                 }
+              },
+              delete: async () => {
+                if (colName === 'trips') {
+                  mockTripsStore = mockTripsStore.filter(t => t.id !== id)
+                } else if (colName === 'participants') {
+                  mockParticipantsStore = mockParticipantsStore.filter(p => p.id !== id)
+                } else if (colName === 'activities') {
+                  mockActivitiesStore = mockActivitiesStore.filter(a => a.id !== id)
+                } else if (colName === 'links') {
+                  mockLinksStore = mockLinksStore.filter(l => l.id !== id)
+                }
               }
             }
           },
@@ -978,5 +989,129 @@ describe('Participants Routes', () => {
     expect(response.statusCode).toBe(400)
     const body = JSON.parse(response.body)
     expect(body.message).toContain('Access denied')
+  })
+
+  it('should delete a participant successfully if user is the trip owner', async () => {
+    const tripId = randomUUID()
+    const participantId = randomUUID()
+    
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: true,
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      id: participantId,
+      trip_id: tripId,
+      name: 'Friend',
+      email: 'friend@example.com',
+      is_owner: false,
+      is_confirmed: false
+    })
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/participants/${participantId}`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    const body = JSON.parse(response.body)
+    expect(body.success).toBe(true)
+    expect(mockParticipantsStore.find(p => p.id === participantId)).toBeUndefined()
+  })
+
+  it('should fail deleting a participant if user is not the trip owner', async () => {
+    const tripId = randomUUID()
+    const participantId = randomUUID()
+    
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: false,
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      id: participantId,
+      trip_id: tripId,
+      name: 'Friend',
+      email: 'friend@example.com',
+      is_owner: false,
+      is_confirmed: false
+    })
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/participants/${participantId}`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(400)
+  })
+
+  it('should update a participant successfully if user is the trip owner', async () => {
+    const tripId = randomUUID()
+    const participantId = randomUUID()
+    
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: true,
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      id: participantId,
+      trip_id: tripId,
+      name: 'Friend',
+      email: 'friend@example.com',
+      is_owner: false,
+      is_confirmed: false
+    })
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/participants/${participantId}`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      },
+      payload: {
+        email: 'newemail@example.com'
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    const body = JSON.parse(response.body)
+    expect(body.success).toBe(true)
+    const updated = mockParticipantsStore.find(p => p.id === participantId)
+    expect(updated.email).toBe('newemail@example.com')
   })
 })
