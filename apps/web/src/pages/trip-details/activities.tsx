@@ -1,42 +1,33 @@
 import { CircleCheck, Edit2, Trash2, MapPin, ChevronDown, Calendar } from "lucide-react";
 import { api } from "../../lib/axios";
-import { useState, useEffect, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { EditActivityModal } from "./edit-activity-modal";
 import { ActivityDetailsModal } from "./activity-details-modal";
 
-interface Activity {
+export interface Activity {
   id: string;
   title: string;
   occurs_at: string;
   local: string | null;
 }
 
-interface ActivityCategory {
+export interface ActivityCategory {
   date: string;
   activities: Activity[];
 }
 
 interface ActivitiesProps {
   isOwner: boolean;
+  activities: ActivityCategory[];
+  onRefreshActivities: () => void;
 }
 
-export function Activities({ isOwner }: ActivitiesProps) {
-  const { tripId } = useParams()
-  const [activities, setActivities] = useState<ActivityCategory[]>([])
+export function Activities({ isOwner, activities, onRefreshActivities }: ActivitiesProps) {
   const [selectedEditActivity, setSelectedEditActivity] = useState<Activity | null>(null)
   const [selectedDetailsActivity, setSelectedDetailsActivity] = useState<Activity | null>(null)
   const [isOpen, setIsOpen] = useState(false)
-
-  const fetchActivities = useCallback(() => {
-    api.get(`trips/${tripId}/activities`).then(response => setActivities(response.data.activities))
-  }, [tripId])
-
-  useEffect(() => {
-    fetchActivities()
-  }, [fetchActivities])
 
   async function handleDeleteActivity(activityId: string) {
     const confirmDelete = window.confirm("Deseja realmente remover esta atividade?")
@@ -44,7 +35,7 @@ export function Activities({ isOwner }: ActivitiesProps) {
 
     try {
       await api.delete(`/activities/${activityId}`)
-      fetchActivities()
+      onRefreshActivities()
     } catch (error) {
       console.error("Erro ao deletar atividade:", error)
       alert("Erro ao deletar atividade.")
@@ -155,7 +146,7 @@ export function Activities({ isOwner }: ActivitiesProps) {
         <EditActivityModal
           activity={selectedEditActivity}
           closeEditActivityModal={() => setSelectedEditActivity(null)}
-          onRefreshActivities={fetchActivities}
+          onRefreshActivities={onRefreshActivities}
         />
       )}
 

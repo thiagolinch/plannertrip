@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../lib/axios";
 import { CreateActivityModal } from "./create-activity-modal";
-import { ImportantLinks } from "./important-links";
-import { Guests } from "./guests";
-import { Activities } from "./activities";
+import { ImportantLinks, Link } from "./important-links";
+import { Guests, Participant } from "./guests";
+import { Activities, ActivityCategory } from "./activities";
 import { DestinationAndDateHeader } from "./destination-and-date-header";
+import { LoadingOverlay } from "../../components/loading-overlay";
 
 interface Trip {
   id: string;
@@ -31,11 +32,40 @@ export function TripDetailsPage() {
   const [isConfirming, setIsConfirming] = useState(false)
   const [isConfirmingTrip, setIsConfirmingTrip] = useState(false)
   const [isCreateActivityModalOpen, setIsCreateActivityModalOpen] = useState(false)
+  const [activities, setActivities] = useState<ActivityCategory[]>([])
+  const [participants, setParticipants] = useState<Participant[]>([])
+  const [links, setLinks] = useState<Link[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  function fetchActivities() {
+    api.get(`trips/${tripId}/activities`).then(response => setActivities(response.data.activities))
+  }
+
+  function fetchParticipants() {
+    api.get(`trips/${tripId}/participants`).then(response => setParticipants(response.data.participants))
+  }
+
+  function fetchLinks() {
+    api.get(`/trips/${tripId}/links`).then(response => setLinks(response.data.links))
+  }
 
   useEffect(() => {
-    api.get(`/trips/${tripId}`).then(response => {
-      setTrip(response.data.trip)
-      setMyParticipant(response.data.my_participant)
+    setIsLoading(true)
+    Promise.all([
+      api.get(`/trips/${tripId}`),
+      api.get(`/trips/${tripId}/activities`),
+      api.get(`/trips/${tripId}/participants`),
+      api.get(`/trips/${tripId}/links`)
+    ]).then(([tripRes, activitiesRes, participantsRes, linksRes]) => {
+      setTrip(tripRes.data.trip)
+      setMyParticipant(tripRes.data.my_participant)
+      setActivities(activitiesRes.data.activities)
+      setParticipants(participantsRes.data.participants)
+      setLinks(linksRes.data.links)
+    }).catch(error => {
+      console.error("Erro ao carregar os dados da viagem:", error)
+    }).finally(() => {
+      setIsLoading(false)
     })
   }, [tripId])
 
@@ -73,7 +103,9 @@ export function TripDetailsPage() {
   }
 
   return (
-    <div className="max-w-6xl px-6 py-10 mx-auto space-y-8">
+    <>
+      {isLoading && <LoadingOverlay message="Carregando detalhes da viagem..." />}
+      <div className="max-w-6xl px-6 py-10 mx-auto space-y-8">
       <DestinationAndDateHeader trip={trip} isOwner={myParticipant?.is_owner || false} />
 
       {trip && !trip.is_confirmed && myParticipant?.is_owner && (
@@ -121,15 +153,27 @@ export function TripDetailsPage() {
             </button>
           </div>
 
-          <Activities isOwner={myParticipant?.is_owner || false} />
+          <Activities 
+            isOwner={myParticipant?.is_owner || false} 
+            activities={activities} 
+            onRefreshActivities={fetchActivities} 
+          />
         </div>
 
         <div className="w-full lg:w-80 space-y-6">
-          <ImportantLinks isOwner={myParticipant?.is_owner || false} />
+          <ImportantLinks 
+            isOwner={myParticipant?.is_owner || false} 
+            links={links} 
+            onRefreshLinks={fetchLinks} 
+          />
 
           <div className="w-full h-px bg-zinc-800" />
 
-          <Guests isOwner={myParticipant?.is_owner || false} />
+          <Guests 
+            isOwner={myParticipant?.is_owner || false} 
+            participants={participants} 
+            onRefreshParticipants={fetchParticipants} 
+          />
         </div>
       </main>
 
@@ -139,5 +183,6 @@ export function TripDetailsPage() {
         />
       )}
     </div>
+    </>
   )
 }

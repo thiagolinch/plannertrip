@@ -1,11 +1,9 @@
 import { CheckCircle2, CircleDashed, UserCog } from "lucide-react";
 import { Button } from "../../components/button";
-import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
-import { api } from "../../lib/axios";
+import { useState } from "react";
 import { ManageGuestsModal } from "./manage-guests-modal";
 
-interface Participant {
+export interface Participant {
   id: string;
   name: string | null;
   email: string;
@@ -15,20 +13,12 @@ interface Participant {
 
 interface GuestsProps {
   isOwner: boolean;
+  participants: Participant[];
+  onRefreshParticipants: () => void;
 }
 
-export function Guests({ isOwner }: GuestsProps) {
-  const { tripId } = useParams()
-  const [participants, setParticipants] = useState<Participant[]>([])
+export function Guests({ isOwner, participants, onRefreshParticipants }: GuestsProps) {
   const [isManageGuestsModalOpen, setIsManageGuestsModalOpen] = useState(false)
-
-  const fetchParticipants = useCallback(() => {
-    api.get(`trips/${tripId}/participants`).then(response => setParticipants(response.data.participants))
-  }, [tripId])
-
-  useEffect(() => {
-    fetchParticipants()
-  }, [fetchParticipants])
 
   function openManageGuestsModal() {
     setIsManageGuestsModalOpen(true)
@@ -70,7 +60,7 @@ export function Guests({ isOwner }: GuestsProps) {
         <ManageGuestsModal 
           closeManageGuestsModal={closeManageGuestsModal}
           participants={participants}
-          onRefreshParticipants={fetchParticipants}
+          onRefreshParticipants={onRefreshParticipants}
           isOwner={isOwner}
         />
       )}

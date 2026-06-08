@@ -1,12 +1,11 @@
 import { Link2, Plus, Edit2, Trash2 } from "lucide-react";
 import { Button } from "../../components/button";
-import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useState } from "react";
 import { api } from "../../lib/axios";
 import { CreateLinkModal } from "./create-link-modal";
 import { EditLinkModal } from "./edit-link-modal";
 
-interface Link {
+export interface Link {
   id: string
   title: string
   url: string
@@ -14,23 +13,13 @@ interface Link {
 
 interface ImportantLinksProps {
   isOwner: boolean
+  links: Link[]
+  onRefreshLinks: () => void
 }
 
-export function ImportantLinks({ isOwner }: ImportantLinksProps) {
-  const { tripId } = useParams()
-  const [links, setLinks] = useState<Link[]>([])
+export function ImportantLinks({ isOwner, links, onRefreshLinks }: ImportantLinksProps) {
   const [isCreateLinkModalOpen, setIsCreateLinkModalOpen] = useState(false)
   const [selectedEditLink, setSelectedEditLink] = useState<Link | null>(null)
-
-  const fetchLinks = useCallback(() => {
-    api.get(`/trips/${tripId}/links`).then(response => {
-      setLinks(response.data.links)
-    })
-  }, [tripId])
-
-  useEffect(() => {
-    fetchLinks()
-  }, [fetchLinks])
 
   async function handleDeleteLink(linkId: string) {
     const confirmDelete = window.confirm("Deseja realmente remover este link?")
@@ -38,7 +27,7 @@ export function ImportantLinks({ isOwner }: ImportantLinksProps) {
 
     try {
       await api.delete(`/links/${linkId}`)
-      fetchLinks()
+      onRefreshLinks()
     } catch (error) {
       console.error("Erro ao deletar link:", error)
       alert("Erro ao deletar link.")
@@ -112,7 +101,7 @@ export function ImportantLinks({ isOwner }: ImportantLinksProps) {
         <EditLinkModal
           link={selectedEditLink}
           closeEditLinkModal={() => setSelectedEditLink(null)}
-          onRefreshLinks={fetchLinks}
+          onRefreshLinks={onRefreshLinks}
         />
       )}
     </div>

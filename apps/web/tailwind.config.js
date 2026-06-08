@@ -12,6 +12,15 @@ export default {
       },
       backgroundImage: {
         pattern: 'url(./src/assets/imgs/bg.png)'
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+      },
+      animation: {
+        fadeIn: 'fadeIn 0.2s ease-out',
       }
     },
   },
