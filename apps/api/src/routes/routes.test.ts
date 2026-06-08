@@ -1318,3 +1318,126 @@ describe('Participants Routes', () => {
     expect(updated.email).toBe('newemail@example.com')
   })
 })
+
+describe('Links Routes', () => {
+  it('should successfully update a link if user is a participant', async () => {
+    const tripId = randomUUID()
+    const linkId = randomUUID()
+
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: false,
+      is_confirmed: true
+    })
+    mockLinksStore.push({
+      id: linkId,
+      trip_id: tripId,
+      title: 'Google',
+      url: 'https://google.com'
+    })
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/links/${linkId}`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      },
+      payload: {
+        title: 'New Google',
+        url: 'https://newgoogle.com'
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    const body = JSON.parse(response.body)
+    expect(body.success).toBe(true)
+
+    const updated = mockLinksStore.find(l => l.id === linkId)
+    expect(updated.title).toBe('New Google')
+    expect(updated.url).toBe('https://newgoogle.com')
+  })
+
+  it('should successfully delete a link if user is the trip owner', async () => {
+    const tripId = randomUUID()
+    const linkId = randomUUID()
+
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_owner: true,
+      is_confirmed: true
+    })
+    mockLinksStore.push({
+      id: linkId,
+      trip_id: tripId,
+      title: 'Google',
+      url: 'https://google.com'
+    })
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/links/${linkId}`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    const body = JSON.parse(response.body)
+    expect(body.success).toBe(true)
+    expect(mockLinksStore.find(l => l.id === linkId)).toBeUndefined()
+  })
+
+  it('should fail deleting a link if user is not the trip owner', async () => {
+    const tripId = randomUUID()
+    const linkId = randomUUID()
+
+    mockTripsStore.push({
+      id: tripId,
+      destination: 'Florianópolis, SC',
+      starts_at: new Date(Date.now() + 86400000).toISOString(),
+      ends_at: new Date(Date.now() + 86400000 * 5).toISOString(),
+      is_confirmed: true
+    })
+    mockParticipantsStore.push({
+      trip_id: tripId,
+      name: 'Friend',
+      email: 'john@example.com',
+      is_owner: false,
+      is_confirmed: true
+    })
+    mockLinksStore.push({
+      id: linkId,
+      trip_id: tripId,
+      title: 'Google',
+      url: 'https://google.com'
+    })
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/links/${linkId}`,
+      headers: {
+        authorization: 'Bearer valid-token'
+      }
+    })
+
+    expect(response.statusCode).toBe(400)
+  })
+})

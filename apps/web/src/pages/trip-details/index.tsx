@@ -125,7 +125,7 @@ export function TripDetailsPage() {
         </div>
 
         <div className="w-full md:w-80 space-y-6">
-          <ImportantLinks />
+          <ImportantLinks isOwner={myParticipant?.is_owner || false} />
 
           <div className="w-full h-px bg-zinc-800" />
 

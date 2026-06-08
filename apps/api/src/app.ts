@@ -24,6 +24,8 @@ import { deleteParticipant } from './routes/delete-participant'
 import { updateParticipant } from './routes/update-participant'
 import { deleteActivity } from './routes/delete-activity'
 import { updateActivity } from './routes/update-activity'
+import { updateLink } from './routes/update-link'
+import { deleteLink } from './routes/delete-link'
 import { errorHandler } from './error-handler'
 
 export function buildApp() {
@@ -62,6 +64,8 @@ export function buildApp() {
   app.register(updateParticipant)
   app.register(deleteActivity)
   app.register(updateActivity)
+  app.register(updateLink)
+  app.register(deleteLink)
 
   return app
 }

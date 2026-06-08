@@ -1,9 +1,10 @@
-import { Link2, Plus } from "lucide-react";
+import { Link2, Plus, Edit2, Trash2 } from "lucide-react";
 import { Button } from "../../components/button";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../lib/axios";
 import { CreateLinkModal } from "./create-link-modal";
+import { EditLinkModal } from "./edit-link-modal";
 
 interface Link {
   id: string
@@ -11,16 +12,38 @@ interface Link {
   url: string
 }
 
-export function ImportantLinks() {
+interface ImportantLinksProps {
+  isOwner: boolean
+}
+
+export function ImportantLinks({ isOwner }: ImportantLinksProps) {
   const { tripId } = useParams()
   const [links, setLinks] = useState<Link[]>([])
   const [isCreateLinkModalOpen, setIsCreateLinkModalOpen] = useState(false)
+  const [selectedEditLink, setSelectedEditLink] = useState<Link | null>(null)
 
-  useEffect(() => {
+  const fetchLinks = useCallback(() => {
     api.get(`/trips/${tripId}/links`).then(response => {
       setLinks(response.data.links)
     })
   }, [tripId])
+
+  useEffect(() => {
+    fetchLinks()
+  }, [fetchLinks])
+
+  async function handleDeleteLink(linkId: string) {
+    const confirmDelete = window.confirm("Deseja realmente remover este link?")
+    if (!confirmDelete) return
+
+    try {
+      await api.delete(`/links/${linkId}`)
+      fetchLinks()
+    } catch (error) {
+      console.error("Erro ao deletar link:", error)
+      alert("Erro ao deletar link.")
+    }
+  }
 
   function openCreateLinkModal() {
     setIsCreateLinkModalOpen(true)
@@ -50,7 +73,25 @@ export function ImportantLinks() {
                 </a>
               </div>
 
-              <Link2 className="text-zinc-400 size-5 shrink-0" />
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setSelectedEditLink(link)}
+                  className="text-zinc-400 hover:text-zinc-200 transition-colors p-1"
+                  title="Editar link"
+                >
+                  <Edit2 className="size-4" />
+                </button>
+                {isOwner && (
+                  <button
+                    onClick={() => handleDeleteLink(link.id)}
+                    className="text-zinc-400 hover:text-red-400 transition-colors p-1"
+                    title="Excluir link"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                )}
+                <Link2 className="text-zinc-400 size-5" />
+              </div>
             </div>
           ))}
         </div>
@@ -65,6 +106,14 @@ export function ImportantLinks() {
 
       {isCreateLinkModalOpen && (
         <CreateLinkModal closeCreateLinkModal={closeCreateLinkModal} />
+      )}
+
+      {selectedEditLink && (
+        <EditLinkModal
+          link={selectedEditLink}
+          closeEditLinkModal={() => setSelectedEditLink(null)}
+          onRefreshLinks={fetchLinks}
+        />
       )}
     </div>
   )
